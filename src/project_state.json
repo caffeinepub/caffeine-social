@@ -1,0 +1,244 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Social media web app with user management, posts/feed, stories/reels, likes/comments, subscriptions, and notifications using Internet Computer",
+  "architectural_notes": [
+    "Backend: Motoko canisters on Internet Computer for user/post/subscription management",
+    "Frontend: React + TypeScript + Tailwind CSS for responsive web UI",
+    "Authentication: Internet Identity with passkeys and OAuth (Google, Apple, Microsoft)",
+    "Storage: IC canisters for small media; IPFS integration for large videos",
+    "Payments: Stripe checkout via Node.js server, webhook updates IC canister",
+    "Media handling: Store URLs/CIDs in canister, not full files for large content",
+    "Notifications: Polling or external WebSocket relay for real-time updates"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-frontend-postcard-component-that-displays-post-content-media-author-information-like-count-and-like-button-with-state-management",
+      "title": "Create frontend PostCard component that displays post content, media, author information, like count, and like button with state management",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-home-page-that-fetches-and-displays-feed-of-all-posts-using-react-query-with-infinite-scroll-or-pagination",
+      "title": "Create frontend Home page that fetches and displays feed of all posts using React Query, with infinite scroll or pagination",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-profile-page-that-displays-user-information-username-email-subscription-status-and-user-s-posts",
+      "title": "Create frontend Profile page that displays user information (username, email, subscription status) and user's posts",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-subscribe-page-with-stripe-integration-that-initiates-checkout-session-and-updates-user-subscription-status-in-backend-upon-successful-payment",
+      "title": "Create frontend Subscribe page with Stripe integration that initiates checkout session and updates user subscription status in backend upon successful payment",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-storyviewer-component-with-carousel-navigation-that-displays-stories-with-media-content-and-auto-advance-timer",
+      "title": "Create frontend StoryViewer component with carousel navigation that displays stories with media content and auto-advance timer",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-reelplayer-component-using-html5-video-tag-that-plays-video-content-with-controls-loop-functionality-and-like-comment-interface-overlay",
+      "title": "Create frontend ReelPlayer component using HTML5 video tag that plays video content with controls, loop functionality, and like/comment interface overlay",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-frontend-navbar-component-with-navigation-links-to-home-profile-and-subscribe-pages-plus-authentication-status-indicator",
+      "title": "Create frontend Navbar component with navigation links to Home, Profile, and Subscribe pages, plus authentication status indicator",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-design-a-cohesive-visual-theme-with-warm-energetic-colors-oranges-yellows-corals-modern-typography-with-rounded-sans-serif-fonts-and-card-based-layouts-with-subtle-shadows-and-smooth-transitions-throughout-the-application",
+      "title": "Design a cohesive visual theme with warm, energetic colors (oranges, yellows, corals), modern typography with rounded sans-serif fonts, and card-based layouts with subtle shadows and smooth transitions throughout the application",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "User authentication with Internet Identity (passkeys, Google, Apple, Microsoft OAuth)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "User profile management (username, email, subscription status)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Post creation with text and media upload",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Feed view with posts from all users",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Like/unlike functionality for posts",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Comment system for posts",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Stories feature with viewer carousel",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Reels/video player functionality",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Stripe subscription payment integration",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Notification system (polling-based or WebSocket relay)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Implement User data model in Motoko backend with fields: id (Principal), username (Text), email (Text), and subscription (Bool)",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Implement Post data model in Motoko backend with fields: id (Nat), author (Principal), content (Text), mediaUrl (Text), likes (array of Principal), and createdAt (Nat timestamp)",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Create backend function createPost that accepts author (Principal), content (Text), and mediaUrl (Text), generates unique post ID, stores post in canister state, and returns the created Post",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Create backend function likePost that accepts postId (Nat) and user (Principal), adds user to post's likes array if not already present, and prevents duplicate likes from same user",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Create backend function getFeed that returns array of all posts sorted by creation time (newest first)",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Create backend function subscribeUser that accepts user Principal and sets their subscription status to true",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Implement backend data model for Stories with fields: id (Nat), author (Principal), mediaUrl (Text), expiresAt (Nat timestamp), and views (array of Principal)",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Implement backend data model for Comments with fields: id (Nat), postId (Nat), author (Principal), content (Text), and createdAt (Nat timestamp)",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Create backend function addComment that accepts postId (Nat), author (Principal), and content (Text), stores comment, and returns created Comment object",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-27",
+      "summary": "Create backend function getComments that accepts postId (Nat) and returns array of all comments for that post sorted by creation time",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "Implement notification tracking in backend with data model containing: id (Nat), recipientId (Principal), type (Text for like/comment/follow), relatedId (Nat), senderId (Principal), read (Bool), and createdAt (Nat timestamp)",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-29",
+      "summary": "Create backend function getNotifications that accepts userId (Principal) and returns array of user's notifications sorted by creation time (newest first)",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Caffeine Social",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

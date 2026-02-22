@@ -1,0 +1,338 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Caffeine Social - Frontend Implementation",
+  "requirements": [
+    {
+      "id": "REQ-7",
+      "summary": "Create PostCard component to display posts with like functionality",
+      "acceptanceCriteria": [
+        "Component displays post content and media",
+        "Shows like count and author information",
+        "Like button calls backend likePost function",
+        "Uses React Query for optimistic updates"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/PostCard.tsx",
+          "operation": "create",
+          "description": "Create PostCard component that displays post content, media (using ExternalBlob.getDirectURL()), author username, like count, and a like button. Use the authorization component to compare caller identity with post author. Integrate React Query mutation for likePost with optimistic updates. Apply warm color palette and card styling with shadows per REQ-20. Verify the authorization component's usage instructions before implementing identity comparison."
+        },
+        {
+          "path": "frontend/src/hooks/useLikePost.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for likePost backend function with optimistic updates to the feed query cache. Handle errors gracefully and revert on failure."
+        },
+        {
+          "path": "frontend/src/components/CommentSection.tsx",
+          "operation": "create",
+          "description": "Create CommentSection component that displays comments list and comment input form. Use getComments backend function to fetch comments for a post. Display author username and formatted timestamp for each comment. Include text input and submit button for adding comments. Apply warm color styling per REQ-20."
+        },
+        {
+          "path": "frontend/src/hooks/useGetComments.ts",
+          "operation": "create",
+          "description": "Create React Query hook for getComments backend function. Accept postId parameter."
+        },
+        {
+          "path": "frontend/src/hooks/useAddComment.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for addComment backend function. Invalidate comments query for the post on success."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Create Home page with post feed and post creation",
+      "acceptanceCriteria": [
+        "Page fetches posts using getFeed backend function",
+        "Posts are displayed in feed layout using PostCard components",
+        "Uses React Query for data fetching and caching",
+        "Responsive grid layout with Tailwind CSS",
+        "User can create new posts with content and optional media"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Home.tsx",
+          "operation": "create",
+          "description": "Create Home page that uses React Query to fetch posts via getFeed backend function. Display posts in a responsive grid using PostCard components. Include CreatePostForm at the top for authenticated users. Include loading and error states. Apply warm color palette and modern typography per REQ-20. Ensure user is authenticated before showing content per authorization component guidelines."
+        },
+        {
+          "path": "frontend/src/hooks/useGetFeed.ts",
+          "operation": "create",
+          "description": "Create React Query hook for fetching feed using getFeed backend function. Enable automatic refetching and caching."
+        },
+        {
+          "path": "frontend/src/components/CreatePostForm.tsx",
+          "operation": "create",
+          "description": "Create CreatePostForm component with text input for content and file upload for media. Use ExternalBlob.fromBytes() for media uploads with progress tracking per blob-storage component. Call createPost backend function with content and media. Show upload progress indicator. Apply warm color styling per REQ-20. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useCreatePost.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for createPost backend function. Invalidate feed query on success to show new post immediately. Handle ExternalBlob upload per blob-storage component guidelines. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Register Home page route at '/' path using @tanstack/react-router. Wrap with authentication guard to ensure user is logged in before accessing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Create Profile page displaying user information and posts",
+      "acceptanceCriteria": [
+        "Page displays authenticated user information",
+        "Shows user's posts filtered by author",
+        "Displays subscription status badge",
+        "Responsive layout with Tailwind CSS"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Profile.tsx",
+          "operation": "create",
+          "description": "Create Profile page that displays current user's profile information (username, email, subscription status) using getCallerUserProfile. Filter and display user's own posts from feed using identity comparison per authorization component. Show subscription badge with warm colors per REQ-20. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useGetCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create React Query hook for getCallerUserProfile following authorization component pattern to prevent modal flash. Return custom state with proper actor dependency tracking."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Register Profile page route at '/profile' path. Ensure route is protected and requires authentication."
+        }
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "summary": "Create Subscribe page with Stripe checkout integration",
+      "acceptanceCriteria": [
+        "Page displays subscription plans and pricing",
+        "Stripe checkout button initiates payment flow",
+        "After successful payment, backend subscribeUser function is called",
+        "User is redirected back to app with success message"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/Subscribe.tsx",
+          "operation": "create",
+          "description": "Create Subscribe page displaying subscription plans with pricing information. Include checkout button that uses createCheckoutSession via the stripe component. Display subscription benefits using warm, energetic colors per REQ-20. Use the stripe component to handle checkout session creation and redirect. Verify the stripe component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useCreateCheckoutSession.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook following stripe component pattern for createCheckoutSession. Parse JSON response, validate session.url exists, and prepare for window.location.href redirect. Verify the stripe component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/PaymentSuccess.tsx",
+          "operation": "create",
+          "description": "Create PaymentSuccess component to display success message after Stripe payment completion. Call subscribeUser backend function to update subscription status. Show celebratory UI with warm colors per REQ-20."
+        },
+        {
+          "path": "frontend/src/pages/PaymentFailure.tsx",
+          "operation": "create",
+          "description": "Create PaymentFailure component to handle failed payment attempts. Display helpful error message and option to retry. Apply consistent styling per REQ-20."
+        },
+        {
+          "path": "frontend/src/components/StripeSetup.tsx",
+          "operation": "create",
+          "description": "Create StripeSetup component following stripe component guidelines. Check isStripeConfigured and provide admin panel for setStripeConfiguration if not configured. Only show to admin users using AdminGuard wrapper. Verify the stripe component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AdminGuard.tsx",
+          "operation": "create",
+          "description": "Create AdminGuard component that uses isCallerAdmin backend function to check admin status per authorization component. Show access denied message if not admin. Render children only for admin users. Apply warm color styling per REQ-20. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useIsCallerAdmin.ts",
+          "operation": "create",
+          "description": "Create React Query hook for isCallerAdmin backend function to check if current user has admin role."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Register Subscribe page at '/subscribe', PaymentSuccess at '/payment-success', and PaymentFailure at '/payment-failure' per stripe component requirements."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Create StoryViewer component with carousel navigation and story creation",
+      "acceptanceCriteria": [
+        "Component displays stories in fullscreen carousel",
+        "Auto-advances to next story after set duration",
+        "Supports tap navigation (left/right)",
+        "Shows progress indicators for multiple stories",
+        "User can create new stories with media"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/StoryViewer.tsx",
+          "operation": "create",
+          "description": "Create StoryViewer component with fullscreen carousel for stories. Use ExternalBlob.getDirectURL() to display story media. Implement auto-advance timer (5-10 seconds per story), tap navigation zones (left/right), and progress bars. Call viewStory backend function when story is viewed. Apply warm color palette to UI elements per REQ-20."
+        },
+        {
+          "path": "frontend/src/hooks/useGetActiveStories.ts",
+          "operation": "create",
+          "description": "Create React Query hook for fetching active stories using getActiveStories backend function. Enable polling for fresh story updates."
+        },
+        {
+          "path": "frontend/src/hooks/useViewStory.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for viewStory backend function to track story views."
+        },
+        {
+          "path": "frontend/src/pages/Stories.tsx",
+          "operation": "create",
+          "description": "Create Stories page that displays story thumbnails in a horizontal scrollable row at the top. Clicking a story opens StoryViewer component in fullscreen mode. Include CreateStoryForm with floating action button. Apply consistent styling per REQ-20."
+        },
+        {
+          "path": "frontend/src/components/CreateStoryForm.tsx",
+          "operation": "create",
+          "description": "Create CreateStoryForm component with file upload for story media. Use ExternalBlob.fromBytes() per blob-storage component. Call createStory backend function with media and expiration hours (default 24). Show upload progress. Apply warm color styling per REQ-20. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useCreateStory.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for createStory backend function. Invalidate active stories query on success. Handle ExternalBlob upload per blob-storage component guidelines. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Register Stories page route at '/stories' path. Ensure authentication is required."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Create ReelPlayer component with video playback and interaction overlay",
+      "acceptanceCriteria": [
+        "Component uses HTML5 video element",
+        "Includes play/pause controls",
+        "Shows like and comment buttons overlaid on video",
+        "Supports vertical scroll between reels"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ReelPlayer.tsx",
+          "operation": "create",
+          "description": "Create ReelPlayer component using HTML5 video tag with ExternalBlob.getDirectURL() for video source. Implement play/pause controls, like button overlay (using likePost), and comment button overlay. Support vertical scroll navigation between reels. Apply warm color accents to controls per REQ-20."
+        },
+        {
+          "path": "frontend/src/pages/Reels.tsx",
+          "operation": "create",
+          "description": "Create Reels page with vertical scrollable layout. Filter feed posts that have video media and display using ReelPlayer components. Implement scroll-based auto-play (play video when in viewport). Apply fullscreen layout per REQ-20."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Register Reels page route at '/reels' path with authentication requirement."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Create Navbar component with navigation, authentication, and notifications",
+      "acceptanceCriteria": [
+        "Component displays navigation links",
+        "Shows Internet Identity login/logout button",
+        "Displays user avatar or username when authenticated",
+        "Responsive mobile menu for small screens",
+        "Shows notification bell with unread count"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Navbar.tsx",
+          "operation": "create",
+          "description": "Create Navbar component with navigation links to Home, Stories, Reels, Profile, and Subscribe pages. Include LoginButton component following authorization component pattern with useInternetIdentity hook. Display username from user profile when authenticated. Add NotificationBell component. Implement responsive mobile menu. Apply warm color palette and rounded styling per REQ-20. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/LoginButton.tsx",
+          "operation": "create",
+          "description": "Create LoginButton component following authorization component pattern. Use useInternetIdentity hook for login/logout with queryClient.clear() on logout. Handle authentication states and errors per component guidelines. Apply warm color styling per REQ-20. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/NotificationBell.tsx",
+          "operation": "create",
+          "description": "Create NotificationBell component with icon badge showing unread count. Dropdown displays notification list when clicked. Use getNotifications backend function with polling. Display notification type (like, comment, follow), sender username, and time ago. Apply warm color styling per REQ-20."
+        },
+        {
+          "path": "frontend/src/hooks/useGetNotifications.ts",
+          "operation": "create",
+          "description": "Create React Query hook for getNotifications backend function. Enable polling every 30 seconds for updates per BuildRequest constraint."
+        },
+        {
+          "path": "frontend/src/hooks/useMarkNotificationAsRead.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for markNotificationAsRead backend function. Invalidate notifications query on success."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "create",
+          "description": "Create Layout component that wraps page content with Navbar at the top. Use as wrapper in router configuration. Apply global theme colors and typography per REQ-20."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Wrap all routes with Layout component to ensure Navbar appears on all pages."
+        }
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "summary": "Apply cohesive visual theme with warm colors and modern typography",
+      "acceptanceCriteria": [
+        "Consistent color palette applied across all pages",
+        "Typography hierarchy is clear and readable",
+        "Interactive elements have smooth hover and transition effects",
+        "Card components have consistent styling with shadows and rounded corners"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Define global CSS custom properties for warm color palette (oranges, yellows, corals) and modern rounded sans-serif font stack. Add base styles for typography hierarchy, smooth transitions, and consistent spacing. Set card shadow and border-radius variables."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme with custom warm color palette (primary, secondary, accent shades), rounded sans-serif font family, and shadow utilities. Configure smooth transition timings for interactive elements."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Implement authentication flow with profile setup",
+      "acceptanceCriteria": [
+        "User must log in to access application",
+        "First-time users are prompted to create profile with username and email",
+        "Profile setup modal does not flash on repeat visits",
+        "All application data is cleared on logout"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Create ProfileSetupModal component following authorization component pattern. Show modal when user is authenticated but has no profile (getCallerUserProfile returns null). Form collects username and email, calls saveCallerUserProfile. Use custom loading state to prevent flash per authorization component guidelines. Apply warm color styling per REQ-20. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSaveCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook for saveCallerUserProfile backend function. Invalidate user profile query on success."
+        },
+        {
+          "path": "frontend/src/components/AuthGuard.tsx",
+          "operation": "create",
+          "description": "Create AuthGuard component that checks authentication status using useInternetIdentity hook. Show login prompt if not authenticated. Show ProfileSetupModal if authenticated but no profile exists using custom loading state per authorization component pattern. Render children only when fully authenticated with profile. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/routes.tsx",
+          "operation": "modify",
+          "description": "Wrap all authenticated routes with AuthGuard component to enforce login and profile setup before accessing application features."
+        }
+      ]
+    }
+  ]
+}

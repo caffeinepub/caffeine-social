@@ -1,2 +1,3 @@
-# caffeine-social
-Exported from Caffeine project: Caffeine Social
+## Caffeine Social
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

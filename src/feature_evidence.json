@@ -1,0 +1,205 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-create-frontend-postcard-component-that-displays-post-content-media-author-information-like-count-and-like-button-with-state-management",
+      "featureTitle": "Create frontend PostCard component that displays post content, media, author information, like count, and like button with state management",
+      "files": [
+        "frontend/src/components/AuthGuard.tsx",
+        "frontend/src/components/ProfileSetupModal.tsx",
+        "frontend/src/hooks/useSaveCallerUserProfile.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-home-page-that-fetches-and-displays-feed-of-all-posts-using-react-query-with-infinite-scroll-or-pagination",
+      "featureTitle": "Create frontend Home page that fetches and displays feed of all posts using React Query, with infinite scroll or pagination",
+      "files": [
+        "frontend/src/components/CreatePostForm.tsx",
+        "frontend/src/hooks/useCreatePost.ts",
+        "frontend/src/hooks/useGetFeed.ts",
+        "frontend/src/pages/Home.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-profile-page-that-displays-user-information-username-email-subscription-status-and-user-s-posts",
+      "featureTitle": "Create frontend Profile page that displays user information (username, email, subscription status) and user's posts",
+      "files": [
+        "frontend/src/hooks/useGetCallerUserProfile.ts",
+        "frontend/src/pages/Profile.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-subscribe-page-with-stripe-integration-that-initiates-checkout-session-and-updates-user-subscription-status-in-backend-upon-successful-payment",
+      "featureTitle": "Create frontend Subscribe page with Stripe integration that initiates checkout session and updates user subscription status in backend upon successful payment",
+      "files": [
+        "frontend/src/components/AdminGuard.tsx",
+        "frontend/src/components/StripeSetup.tsx",
+        "frontend/src/hooks/useCreateCheckoutSession.ts",
+        "frontend/src/hooks/useIsCallerAdmin.ts",
+        "frontend/src/pages/PaymentFailure.tsx",
+        "frontend/src/pages/PaymentSuccess.tsx",
+        "frontend/src/pages/Subscribe.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-10"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-storyviewer-component-with-carousel-navigation-that-displays-stories-with-media-content-and-auto-advance-timer",
+      "featureTitle": "Create frontend StoryViewer component with carousel navigation that displays stories with media content and auto-advance timer",
+      "files": [
+        "frontend/src/components/CreateStoryForm.tsx",
+        "frontend/src/components/StoryViewer.tsx",
+        "frontend/src/hooks/useCreateStory.ts",
+        "frontend/src/hooks/useGetActiveStories.ts",
+        "frontend/src/hooks/useViewStory.ts",
+        "frontend/src/pages/Stories.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-11"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-reelplayer-component-using-html5-video-tag-that-plays-video-content-with-controls-loop-functionality-and-like-comment-interface-overlay",
+      "featureTitle": "Create frontend ReelPlayer component using HTML5 video tag that plays video content with controls, loop functionality, and like/comment interface overlay",
+      "files": [
+        "frontend/src/components/ReelPlayer.tsx",
+        "frontend/src/pages/Reels.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-12"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-frontend-navbar-component-with-navigation-links-to-home-profile-and-subscribe-pages-plus-authentication-status-indicator",
+      "featureTitle": "Create frontend Navbar component with navigation links to Home, Profile, and Subscribe pages, plus authentication status indicator",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/LoginButton.tsx",
+        "frontend/src/components/Navbar.tsx",
+        "frontend/src/components/NotificationBell.tsx",
+        "frontend/src/hooks/useGetNotifications.ts",
+        "frontend/src/hooks/useMarkNotificationAsRead.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-13"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-design-a-cohesive-visual-theme-with-warm-energetic-colors-oranges-yellows-corals-modern-typography-with-rounded-sans-serif-fonts-and-card-based-layouts-with-subtle-shadows-and-smooth-transitions-throughout-the-application",
+      "featureTitle": "Design a cohesive visual theme with warm, energetic colors (oranges, yellows, corals), modern typography with rounded sans-serif fonts, and card-based layouts with subtle shadows and smooth transitions throughout the application",
+      "files": [
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-20"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
