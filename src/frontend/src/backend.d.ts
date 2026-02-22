@@ -34,6 +34,7 @@ export interface PostView {
     createdAt: Time;
     author: Principal;
     likes: Array<Principal>;
+    comments: Array<Comment>;
 }
 export interface http_header {
     value: string;
@@ -99,6 +100,7 @@ export enum UserRole {
 }
 export interface backendInterface {
     addComment(postId: bigint, content: string): Promise<Comment>;
+    addCommentBackend(postId: bigint, text: string, author: Principal): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createPost(content: string, media: ExternalBlob | null): Promise<PostView>;

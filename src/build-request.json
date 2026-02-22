@@ -1,390 +1,165 @@
 {
   "kind": "build_request",
-  "title": "Build social media platform with posts, stories, reels, and subscriptions",
-  "projectName": "Caffeine Social",
+  "title": "Implement full Home.tsx page with post feed, comments display, and add comment functionality",
+  "projectName": "RunInsta",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Implement User data model in Motoko backend with fields: id (Principal), username (Text), email (Text), and subscription (Bool)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "public type User = { id: Principal; username: Text; email: Text; subscription: Bool; };"
-        ]
-      },
-      "acceptanceCriteria": [
-        "User type is defined with all specified fields",
-        "Principal is used as unique identifier"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Implement Post data model in Motoko backend with fields: id (Nat), author (Principal), content (Text), mediaUrl (Text), likes (array of Principal), and createdAt (Nat timestamp)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "public type Post = { id: Nat; author: Principal; content: Text; mediaUrl: Text; likes: [Principal]; createdAt: Nat; };"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Post type is defined with all specified fields",
-        "Likes are stored as array of Principal identifiers",
-        "Timestamp is stored as Nat"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Create backend function createPost that accepts author (Principal), content (Text), and mediaUrl (Text), generates unique post ID, stores post in canister state, and returns the created Post",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "public func createPost(author: Principal, content: Text, mediaUrl: Text) : async Post"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts author, content, and mediaUrl parameters",
-        "Auto-increments post ID",
-        "Returns newly created post object",
-        "Stores post in canister stable storage"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Create backend function likePost that accepts postId (Nat) and user (Principal), adds user to post's likes array if not already present, and prevents duplicate likes from same user",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Public functions: CreatePost, LikePost, GetFeed, SubscribeUser"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts postId and user Principal",
-        "Adds user to likes array only if not already present",
-        "Returns updated post or success status"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Create backend function getFeed that returns array of all posts sorted by creation time (newest first)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Public functions: CreatePost, LikePost, GetFeed, SubscribeUser"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Returns array of Post objects",
-        "Posts are sorted by createdAt timestamp in descending order"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Create backend function subscribeUser that accepts user Principal and sets their subscription status to true",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Public functions: CreatePost, LikePost, GetFeed, SubscribeUser"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts user Principal",
-        "Updates user subscription field to true",
-        "Returns success status or updated user object"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Create frontend PostCard component that displays post content, media, author information, like count, and like button with state management",
+      "id": "REQ-26",
+      "text": "Update Home.tsx to fetch posts from backend using backendActor.getFeed() and display them in a feed layout with max-w-2xl centered container on gray-100 background",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "PostCard.tsx"
+          "Fetches posts from your backend canister",
+          "const postsFromBackend: Post[] = await backendActor.getFeed();"
         ]
       },
       "acceptanceCriteria": [
-        "Component displays post content and media",
-        "Shows like count and author information",
-        "Like button calls backend likePost function",
-        "Uses React Query for optimistic updates"
+        "Home page calls backendActor.getFeed() to retrieve posts array",
+        "Posts are displayed in a centered container with max-w-2xl width",
+        "Page uses min-h-screen bg-gray-100 for full-height gray background",
+        "Page title 'RunInsta Feed' is displayed with text-2xl font-bold mb-4 styling"
       ]
     },
     {
-      "id": "REQ-8",
-      "text": "Create frontend Home page that fetches and displays feed of all posts using React Query, with infinite scroll or pagination",
+      "id": "REQ-27",
+      "text": "Implement automatic feed refresh in Home.tsx that polls backendActor.getFeed() every 5 seconds using setInterval in useEffect",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "Home.tsx",
-          "const posts = await backend.getFeed();"
+          "const interval = setInterval(fetchPosts, 5000); // refresh every 5s"
         ]
       },
       "acceptanceCriteria": [
-        "Page fetches posts using getFeed backend function",
-        "Posts are displayed in feed layout using PostCard components",
-        "Uses React Query for data fetching and caching",
-        "Responsive grid layout with Tailwind CSS"
+        "useEffect sets up interval that calls fetchPosts every 5000ms",
+        "Interval is cleared on component unmount using cleanup function",
+        "Feed updates automatically to show new posts and comments without manual refresh"
       ]
     },
     {
-      "id": "REQ-9",
-      "text": "Create frontend Profile page that displays user information (username, email, subscription status) and user's posts",
+      "id": "REQ-28",
+      "text": "Display comments section below each PostCard in Home.tsx showing all existing comments with author name and text, using font-semibold for author and text-sm text-gray-700 for comment text",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "Profile.tsx"
+          "<h3 className=\"font-semibold text-sm text-gray-600\">Comments</h3>",
+          "post.comments.map((c, idx) => (",
+          "<span className=\"font-semibold\">{c.author}: </span>"
         ]
       },
       "acceptanceCriteria": [
-        "Page displays authenticated user information",
-        "Shows user's posts filtered by author",
-        "Displays subscription status badge",
-        "Responsive layout with Tailwind CSS"
+        "Comments section has 'Comments' heading with font-semibold text-sm text-gray-600 styling",
+        "Each comment displays author name in font-semibold followed by colon",
+        "Comment text uses text-sm text-gray-700 styling",
+        "All comments from post.comments array are rendered"
       ]
     },
     {
-      "id": "REQ-10",
-      "text": "Create frontend Subscribe page with Stripe integration that initiates checkout session and updates user subscription status in backend upon successful payment",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Subscribe.tsx",
-          "const response = await fetch('/create-checkout-session', { method: 'POST' });"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Page displays subscription plans and pricing",
-        "Stripe checkout button initiates payment flow",
-        "After successful payment, backend subscribeUser function is called",
-        "User is redirected back to app with success message"
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "text": "Create frontend StoryViewer component with carousel navigation that displays stories with media content and auto-advance timer",
+      "id": "REQ-29",
+      "text": "Add comment input form below comments list in Home.tsx with text input field and 'Post' button, supporting Enter key submission and per-post comment text state management",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "StoryViewer.tsx",
-          "Use carousel for Stories"
+          "<input type=\"text\" placeholder=\"Add a comment...\"",
+          "onKeyDown={(e) => { if (e.key === \"Enter\") handleAddComment(post.id); }",
+          "const [newComments, setNewComments] = useState<{ [key: number]: string }>({});"
         ]
       },
       "acceptanceCriteria": [
-        "Component displays stories in fullscreen carousel",
-        "Auto-advances to next story after set duration",
-        "Supports tap navigation (left/right)",
-        "Shows progress indicators for multiple stories"
+        "Input field has 'Add a comment...' placeholder text",
+        "Input uses flex-1 border rounded-l-md px-2 py-1 focus:outline-none styling",
+        "Submit button labeled 'Post' with bg-blue-500 text-white px-3 rounded-r-md hover:bg-blue-600",
+        "Pressing Enter key in input triggers handleAddComment",
+        "Clicking 'Post' button triggers handleAddComment",
+        "Each post maintains separate comment text state using newComments object keyed by post.id"
       ]
     },
     {
-      "id": "REQ-12",
-      "text": "Create frontend ReelPlayer component using HTML5 video tag that plays video content with controls, loop functionality, and like/comment interface overlay",
+      "id": "REQ-30",
+      "text": "Implement handleAddComment function in Home.tsx that calls backendActor.addComment(postId, text), clears the input field, and refreshes the feed",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "ReelPlayer.tsx",
-          "Use <video> tag for Reels"
+          "await backendActor.addComment(postId, text);",
+          "setNewComments({ ...newComments, [postId]: \"\" });",
+          "fetchPosts(); // refresh feed to show new comment"
         ]
       },
       "acceptanceCriteria": [
-        "Component uses HTML5 video element",
-        "Includes play/pause controls",
-        "Shows like and comment buttons overlaid on video",
-        "Supports vertical scroll between reels"
+        "handleAddComment validates that comment text is not empty before proceeding",
+        "Function calls backendActor.addComment with postId and text parameters",
+        "After successful comment addition, input field for that post is cleared",
+        "fetchPosts is called after addComment to refresh feed and display new comment"
       ]
     },
     {
-      "id": "REQ-13",
-      "text": "Create frontend Navbar component with navigation links to Home, Profile, and Subscribe pages, plus authentication status indicator",
+      "id": "REQ-31",
+      "text": "Implement addComment backend function in main.mo that accepts postId (Nat), text (Text), and author (Principal), creates comment with timestamp, adds it to the post's comments list, and returns Bool indicating success",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "public func addComment(postId: Nat, text: Text, author: Principal) : async Bool",
+          "let comment = { author; text; createdAt = Time.now() };",
+          "posts[i].comments := Array.append(posts[i].comments, [comment]);"
+        ]
+      },
+      "acceptanceCriteria": [
+        "addComment function signature accepts postId (Nat), text (Text), and author (Principal)",
+        "Function iterates through posts array to find matching postId",
+        "When post found, creates comment record with author, text, and createdAt (Time.now())",
+        "Comment is appended to post's comments array using Array.append",
+        "Returns true if post found and comment added, false otherwise"
+      ]
+    },
+    {
+      "id": "REQ-32",
+      "text": "Define TypeScript type interfaces in Home.tsx for Comment with author (string), text (string), and createdAt (number), and Post with id (number), author (any/Principal), content (string), mediaUrl (string), likes (any[]), comments (Comment[]), and createdAt (number)",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-last"
         ],
         "quotes": [
-          "Navbar.tsx"
+          "type Comment = { author: string; text: string; createdAt: number; };",
+          "type Post = { id: number; author: any; content: string; mediaUrl: string; likes: any[]; comments: Comment[]; createdAt: number; };"
         ]
       },
       "acceptanceCriteria": [
-        "Component displays navigation links",
-        "Shows Internet Identity login/logout button",
-        "Displays user avatar or username when authenticated",
-        "Responsive mobile menu for small screens"
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "Implement backend data model for Stories with fields: id (Nat), author (Principal), mediaUrl (Text), expiresAt (Nat timestamp), and views (array of Principal)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "story/reel storage"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Story type is defined with all specified fields",
-        "Includes expiration timestamp for 24-hour stories",
-        "Tracks viewers as array of Principals"
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "text": "Implement backend data model for Comments with fields: id (Nat), postId (Nat), author (Principal), content (Text), and createdAt (Nat timestamp)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Comment system for posts"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Comment type is defined with all specified fields",
-        "Links to parent post via postId",
-        "Includes timestamp for sorting"
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "text": "Create backend function addComment that accepts postId (Nat), author (Principal), and content (Text), stores comment, and returns created Comment object",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts postId, author, and content",
-        "Auto-generates comment ID",
-        "Stores comment in canister state",
-        "Returns created comment object"
-      ]
-    },
-    {
-      "id": "REQ-17",
-      "text": "Create backend function getComments that accepts postId (Nat) and returns array of all comments for that post sorted by creation time",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts postId parameter",
-        "Returns array of Comment objects",
-        "Comments are sorted by createdAt timestamp"
-      ]
-    },
-    {
-      "id": "REQ-18",
-      "text": "Implement notification tracking in backend with data model containing: id (Nat), recipientId (Principal), type (Text for like/comment/follow), relatedId (Nat), senderId (Principal), read (Bool), and createdAt (Nat timestamp)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "User likes → backend updates likes array → frontend polls or subscribes to update"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Notification type is defined with all specified fields",
-        "Supports different notification types (like, comment, follow)",
-        "Tracks read/unread status"
-      ]
-    },
-    {
-      "id": "REQ-19",
-      "text": "Create backend function getNotifications that accepts userId (Principal) and returns array of user's notifications sorted by creation time (newest first)",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "notifications"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Function accepts userId parameter",
-        "Returns array of Notification objects for that user",
-        "Notifications are sorted by createdAt in descending order"
-      ]
-    },
-    {
-      "id": "REQ-20",
-      "text": "Design a cohesive visual theme with warm, energetic colors (oranges, yellows, corals), modern typography with rounded sans-serif fonts, and card-based layouts with subtle shadows and smooth transitions throughout the application",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Consistent color palette applied across all pages",
-        "Typography hierarchy is clear and readable",
-        "Interactive elements have smooth hover and transition effects",
-        "Card components have consistent styling with shadows and rounded corners"
+        "Comment type defined with author as string, text as string, createdAt as number",
+        "Post type defined with id as number, author as any (Principal), content, mediaUrl, likes array, comments array, and createdAt",
+        "Type definitions are placed at top of Home.tsx file before component definition"
       ]
     }
   ],
   "constraints": [
+    "Do not modify immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui",
     "Use single-actor architecture with all Motoko logic in backend/main.mo",
-    "Do not modify immutable frontend paths: useInternetIdentity hooks, useActor.ts, main.tsx, or components/ui directory",
-    "Authentication must use Internet Identity only",
-    "No external databases - all data stored in IC canisters",
-    "No real-time WebSockets - use polling for notifications",
-    "Stripe integration requires external webhook handling"
+    "Comments must be stored as nested structure within Post records, not in separate map"
   ],
   "nonGoals": [
-    "Music overlay or audio integration for stories",
-    "Video processing or editing features",
-    "Advanced reel effects or filters",
-    "Third-party API integrations (Spotify, Instagram, etc.)",
-    "Mobile app development (React Native)",
-    "Real-time chat or messaging",
-    "Push notifications",
-    "Live streaming functionality"
+    "Optimistic UI updates for comments (user requested explicit refresh via fetchPosts)",
+    "Comment pagination or lazy loading",
+    "Comment editing or deletion functionality",
+    "Real-time updates using WebSockets (polling every 5s is sufficient)",
+    "Comment likes or nested replies"
   ],
   "imageRequirements": {
     "required": [],

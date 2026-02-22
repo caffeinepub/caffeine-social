@@ -2,36 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-frontend-postcard-component-that-displays-post-content-media-author-information-like-count-and-like-button-with-state-management",
-      "featureTitle": "Create frontend PostCard component that displays post content, media, author information, like count, and like button with state management",
+      "featureId": "feature-update-home-tsx-to-fetch-posts-from-backend-using-backendactor-getfeed-and-display-them-in-a-feed-layout-with-max-w-2xl-centered-container-on-gray-100-background",
+      "featureTitle": "Update Home.tsx to fetch posts from backend using backendActor.getFeed() and display them in a feed layout with max-w-2xl centered container on gray-100 background",
       "files": [
-        "frontend/src/components/AuthGuard.tsx",
-        "frontend/src/components/ProfileSetupModal.tsx",
-        "frontend/src/hooks/useSaveCallerUserProfile.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "stripe@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "http-outcalls@3.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-create-frontend-home-page-that-fetches-and-displays-feed-of-all-posts-using-react-query-with-infinite-scroll-or-pagination",
-      "featureTitle": "Create frontend Home page that fetches and displays feed of all posts using React Query, with infinite scroll or pagination",
-      "files": [
-        "frontend/src/components/CreatePostForm.tsx",
-        "frontend/src/hooks/useCreatePost.ts",
-        "frontend/src/hooks/useGetFeed.ts",
         "frontend/src/pages/Home.tsx"
       ],
       "components": [
@@ -46,16 +19,15 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-26"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-frontend-profile-page-that-displays-user-information-username-email-subscription-status-and-user-s-posts",
-      "featureTitle": "Create frontend Profile page that displays user information (username, email, subscription status) and user's posts",
+      "featureId": "feature-implement-automatic-feed-refresh-in-home-tsx-that-polls-backendactor-getfeed-every-5-seconds-using-setinterval-in-useeffect",
+      "featureTitle": "Implement automatic feed refresh in Home.tsx that polls backendActor.getFeed() every 5 seconds using setInterval in useEffect",
       "files": [
-        "frontend/src/hooks/useGetCallerUserProfile.ts",
-        "frontend/src/pages/Profile.tsx"
+        "frontend/src/pages/Home.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -69,21 +41,15 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-9"
+        "REQ-27"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-frontend-subscribe-page-with-stripe-integration-that-initiates-checkout-session-and-updates-user-subscription-status-in-backend-upon-successful-payment",
-      "featureTitle": "Create frontend Subscribe page with Stripe integration that initiates checkout session and updates user subscription status in backend upon successful payment",
+      "featureId": "feature-display-comments-section-below-each-postcard-in-home-tsx-showing-all-existing-comments-with-author-name-and-text-using-font-semibold-for-author-and-text-sm-text-gray-700-for-comment-text",
+      "featureTitle": "Display comments section below each PostCard in Home.tsx showing all existing comments with author name and text, using font-semibold for author and text-sm text-gray-700 for comment text",
       "files": [
-        "frontend/src/components/AdminGuard.tsx",
-        "frontend/src/components/StripeSetup.tsx",
-        "frontend/src/hooks/useCreateCheckoutSession.ts",
-        "frontend/src/hooks/useIsCallerAdmin.ts",
-        "frontend/src/pages/PaymentFailure.tsx",
-        "frontend/src/pages/PaymentSuccess.tsx",
-        "frontend/src/pages/Subscribe.tsx"
+        "frontend/src/pages/Home.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -97,20 +63,15 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-10"
+        "REQ-28"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-frontend-storyviewer-component-with-carousel-navigation-that-displays-stories-with-media-content-and-auto-advance-timer",
-      "featureTitle": "Create frontend StoryViewer component with carousel navigation that displays stories with media content and auto-advance timer",
+      "featureId": "feature-add-comment-input-form-below-comments-list-in-home-tsx-with-text-input-field-and-post-button-supporting-enter-key-submission-and-per-post-comment-text-state-management",
+      "featureTitle": "Add comment input form below comments list in Home.tsx with text input field and 'Post' button, supporting Enter key submission and per-post comment text state management",
       "files": [
-        "frontend/src/components/CreateStoryForm.tsx",
-        "frontend/src/components/StoryViewer.tsx",
-        "frontend/src/hooks/useCreateStory.ts",
-        "frontend/src/hooks/useGetActiveStories.ts",
-        "frontend/src/hooks/useViewStory.ts",
-        "frontend/src/pages/Stories.tsx"
+        "frontend/src/pages/Home.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -124,16 +85,15 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-11"
+        "REQ-29"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-frontend-reelplayer-component-using-html5-video-tag-that-plays-video-content-with-controls-loop-functionality-and-like-comment-interface-overlay",
-      "featureTitle": "Create frontend ReelPlayer component using HTML5 video tag that plays video content with controls, loop functionality, and like/comment interface overlay",
+      "featureId": "feature-implement-handleaddcomment-function-in-home-tsx-that-calls-backendactor-addcomment-postid-text-clears-the-input-field-and-refreshes-the-feed",
+      "featureTitle": "Implement handleAddComment function in Home.tsx that calls backendActor.addComment(postId, text), clears the input field, and refreshes the feed",
       "files": [
-        "frontend/src/components/ReelPlayer.tsx",
-        "frontend/src/pages/Reels.tsx"
+        "frontend/src/pages/Home.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -147,20 +107,15 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-30"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-frontend-navbar-component-with-navigation-links-to-home-profile-and-subscribe-pages-plus-authentication-status-indicator",
-      "featureTitle": "Create frontend Navbar component with navigation links to Home, Profile, and Subscribe pages, plus authentication status indicator",
+      "featureId": "feature-define-typescript-type-interfaces-in-home-tsx-for-comment-with-author-string-text-string-and-createdat-number-and-post-with-id-number-author-any-principal-content-string-mediaurl-string-likes-any-comments-comment-and-createdat-number",
+      "featureTitle": "Define TypeScript type interfaces in Home.tsx for Comment with author (string), text (string), and createdAt (number), and Post with id (number), author (any/Principal), content (string), mediaUrl (string), likes (any[]), comments (Comment[]), and createdAt (number)",
       "files": [
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/components/LoginButton.tsx",
-        "frontend/src/components/Navbar.tsx",
-        "frontend/src/components/NotificationBell.tsx",
-        "frontend/src/hooks/useGetNotifications.ts",
-        "frontend/src/hooks/useMarkNotificationAsRead.ts"
+        "frontend/src/pages/Home.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -174,30 +129,7 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-13"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-design-a-cohesive-visual-theme-with-warm-energetic-colors-oranges-yellows-corals-modern-typography-with-rounded-sans-serif-fonts-and-card-based-layouts-with-subtle-shadows-and-smooth-transitions-throughout-the-application",
-      "featureTitle": "Design a cohesive visual theme with warm, energetic colors (oranges, yellows, corals), modern typography with rounded sans-serif fonts, and card-based layouts with subtle shadows and smooth transitions throughout the application",
-      "files": [
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "stripe@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "http-outcalls@3.0.0"
-      ],
-      "testIds": [
-        "REQ-20"
+        "REQ-32"
       ],
       "confidence": "high"
     }

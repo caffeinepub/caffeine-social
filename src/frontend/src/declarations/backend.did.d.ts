@@ -34,6 +34,7 @@ export interface PostView {
   'createdAt' : Time,
   'author' : Principal,
   'likes' : Array<Principal>,
+  'comments' : Array<Comment>,
 }
 export interface ShoppingItem {
   'productName' : string,
@@ -110,6 +111,7 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addComment' : ActorMethod<[bigint, string], Comment>,
+  'addCommentBackend' : ActorMethod<[bigint, string, Principal], boolean>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],

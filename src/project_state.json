@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 7,
   "summary": "Social media web app with user management, posts/feed, stories/reels, likes/comments, subscriptions, and notifications using Internet Computer",
   "architectural_notes": [
     "Backend: Motoko canisters on Internet Computer for user/post/subscription management",
@@ -75,6 +75,70 @@
       "title": "Design a cohesive visual theme with warm, energetic colors (oranges, yellows, corals), modern typography with rounded sans-serif fonts, and card-based layouts with subtle shadows and smooth transitions throughout the application",
       "reqIds": [
         "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-postcard-component-to-display-existing-comments-below-the-post-content-showing-comment-author-text-and-timestamp-in-a-scrollable-section-limited-to-3-visible-comments-with-a-view-all-comments-expansion-option",
+      "title": "Update PostCard component to display existing comments below the post content, showing comment author, text, and timestamp in a scrollable section limited to 3 visible comments with a 'View all comments' expansion option",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-comment-input-form-to-postcard-component-with-a-text-input-field-and-submit-button-that-calls-the-addcomment-backend-function-and-optimistically-updates-the-ui",
+      "title": "Add comment input form to PostCard component with a text input field and submit button that calls the addComment backend function and optimistically updates the UI",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-home-tsx-to-fetch-posts-from-backend-using-backendactor-getfeed-and-display-them-in-a-feed-layout-with-max-w-2xl-centered-container-on-gray-100-background",
+      "title": "Update Home.tsx to fetch posts from backend using backendActor.getFeed() and display them in a feed layout with max-w-2xl centered container on gray-100 background",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-automatic-feed-refresh-in-home-tsx-that-polls-backendactor-getfeed-every-5-seconds-using-setinterval-in-useeffect",
+      "title": "Implement automatic feed refresh in Home.tsx that polls backendActor.getFeed() every 5 seconds using setInterval in useEffect",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-comments-section-below-each-postcard-in-home-tsx-showing-all-existing-comments-with-author-name-and-text-using-font-semibold-for-author-and-text-sm-text-gray-700-for-comment-text",
+      "title": "Display comments section below each PostCard in Home.tsx showing all existing comments with author name and text, using font-semibold for author and text-sm text-gray-700 for comment text",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-comment-input-form-below-comments-list-in-home-tsx-with-text-input-field-and-post-button-supporting-enter-key-submission-and-per-post-comment-text-state-management",
+      "title": "Add comment input form below comments list in Home.tsx with text input field and 'Post' button, supporting Enter key submission and per-post comment text state management",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-handleaddcomment-function-in-home-tsx-that-calls-backendactor-addcomment-postid-text-clears-the-input-field-and-refreshes-the-feed",
+      "title": "Implement handleAddComment function in Home.tsx that calls backendActor.addComment(postId, text), clears the input field, and refreshes the feed",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-define-typescript-type-interfaces-in-home-tsx-for-comment-with-author-string-text-string-and-createdat-number-and-post-with-id-number-author-any-principal-content-string-mediaurl-string-likes-any-comments-comment-and-createdat-number",
+      "title": "Define TypeScript type interfaces in Home.tsx for Comment with author (string), text (string), and createdAt (number), and Post with id (number), author (any/Principal), content (string), mediaUrl (string), likes (any[]), comments (Comment[]), and createdAt (number)",
+      "reqIds": [
+        "REQ-32"
       ],
       "version": 1
     }
@@ -233,6 +297,38 @@
       "summary": "Create backend function getNotifications that accepts userId (Principal) and returns array of user's notifications sorted by creation time (newest first)",
       "reqIds": [
         "REQ-19"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Create backend function addComment(postId: Nat, author: Principal, text: Text) that validates the post exists, generates a unique comment ID, stores the comment with timestamp, associates it with the post, and returns the created Comment object",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-33",
+      "summary": "Create backend function getComments(postId: Nat) that retrieves all comments associated with the specified post and returns them as an array sorted by creation time (oldest first)",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-34",
+      "summary": "Update the Post data model in the backend to include a comments field as an array of Comment objects, ensuring backward compatibility with existing posts",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-40",
+      "summary": "Implement addComment backend function in main.mo that accepts postId (Nat), text (Text), and author (Principal), creates comment with timestamp, adds it to the post's comments list, and returns Bool indicating success",
+      "reqIds": [
+        "REQ-31"
       ],
       "status": "pending"
     }

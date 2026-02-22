@@ -112,6 +112,7 @@ export interface PostView {
     createdAt: Time;
     author: Principal;
     likes: Array<Principal>;
+    comments: Array<Comment>;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
@@ -192,6 +193,7 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addComment(postId: bigint, content: string): Promise<Comment>;
+    addCommentBackend(postId: bigint, text: string, author: Principal): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createPost(content: string, media: ExternalBlob | null): Promise<PostView>;
@@ -214,7 +216,7 @@ export interface backendInterface {
     transform(input: TransformationInput): Promise<TransformationOutput>;
     viewStory(storyId: bigint): Promise<StoryView>;
 }
-import type { ExternalBlob as _ExternalBlob, PostView as _PostView, StoryView as _StoryView, StripeSessionStatus as _StripeSessionStatus, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Comment as _Comment, ExternalBlob as _ExternalBlob, PostView as _PostView, StoryView as _StoryView, StripeSessionStatus as _StripeSessionStatus, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -326,6 +328,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.addComment(arg0, arg1);
+            return result;
+        }
+    }
+    async addCommentBackend(arg0: bigint, arg1: string, arg2: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addCommentBackend(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addCommentBackend(arg0, arg1, arg2);
             return result;
         }
     }
@@ -664,6 +680,7 @@ async function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promi
     createdAt: _Time;
     author: Principal;
     likes: Array<Principal>;
+    comments: Array<_Comment>;
 }): Promise<{
     id: bigint;
     media?: ExternalBlob;
@@ -671,6 +688,7 @@ async function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promi
     createdAt: Time;
     author: Principal;
     likes: Array<Principal>;
+    comments: Array<Comment>;
 }> {
     return {
         id: value.id,
@@ -678,7 +696,8 @@ async function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promi
         content: value.content,
         createdAt: value.createdAt,
         author: value.author,
-        likes: value.likes
+        likes: value.likes,
+        comments: value.comments
     };
 }
 async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

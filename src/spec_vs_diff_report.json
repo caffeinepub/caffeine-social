@@ -1,130 +1,37 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-22T06:37:13.329Z",
-  "summary": "The implementation covers the majority of requirements for the social media platform. Most backend data models, functions, and frontend components are present. However, there are notable gaps: the User data model is incomplete, the Reels feature appears to be missing a dedicated data model, Stories have some implementation but lack backend functions for creation and filtering, and several auxiliary features like following and profile editing are not explicitly verified.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Implement User data model in Motoko backend with fields: id (Principal), username (Text), email (Text), and subscription (Bool)",
-      "reason": "The backend implements UserProfile type with username, email, and subscription fields, but it lacks the 'id (Principal)' field as specified. The requirement explicitly states the User type should have an 'id' field of type Principal, but UserProfile omits this.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "requirement": "Create frontend StoryViewer component with carousel navigation that displays stories with media content and auto-advance timer",
-      "reason": "StoryViewer component is partially implemented with navigation and auto-advance, but the acceptance criteria requires support for 'tap navigation (left/right)'. The current implementation uses full-click navigation (handleTap checks left third vs rest), which may not match the expected tap interface.",
-      "evidence": [
-        "frontend/src/components/StoryViewer.tsx"
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "requirement": "Implement backend data model for Stories with fields: id (Nat), author (Principal), mediaUrl (Text), expiresAt (Nat timestamp), and views (array of Principal)",
-      "reason": "The backend Story type uses 'media: ?Storage.ExternalBlob' instead of 'mediaUrl (Text)' as specified. The requirement explicitly states mediaUrl should be of type Text, but the implementation uses a different storage approach.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-22T09:35:51.017Z",
+  "summary": "The implementation successfully delivers all 7 requirements (REQ-26 through REQ-32) for the Home.tsx page with post feed, comments display, and add comment functionality. The diff shows complete implementation of frontend Home.tsx with proper type definitions, automatic polling, comment display, and comment input forms, plus backend addComment function in main.mo with nested comment storage.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Implementation of Stripe configuration and checkout functionality beyond basic subscription",
-      "reason": "The diff includes StripeSetup component, useSetStripeConfiguration, useIsStripeConfigured hooks, and detailed Stripe integration logic. While REQ-10 requires Stripe integration for subscriptions, the implementation includes admin-level Stripe configuration UI and extensive Stripe management features not specified in requirements.",
+      "description": "React Query cache invalidation after adding comments (queryClient.invalidateQueries for 'feed' and 'comments')",
+      "reason": "BuildRequest non-goals explicitly state 'Optimistic UI updates for comments (user requested explicit refresh via fetchPosts)'. The implementation includes React Query invalidations which were not requested and go beyond the specified fetchPosts refresh mechanism.",
       "evidence": [
-        "frontend/src/components/StripeSetup.tsx",
-        "frontend/src/hooks/useSetStripeConfiguration.ts",
-        "frontend/src/hooks/useIsStripeConfigured.ts",
+        "frontend/src/pages/Home.tsx"
+      ]
+    },
+    {
+      "description": "Comment type in backend includes 'id' field and 'content' field instead of 'text'",
+      "reason": "REQ-31 specifies creating a comment record with 'author, text, and createdAt'. REQ-32 specifies Comment type with 'text as string'. The backend implementation uses 'content' field and adds an 'id' field that were not requested.",
+      "evidence": [
         "backend/main.mo"
       ]
     },
     {
-      "description": "Admin authorization and access control system",
-      "reason": "The implementation includes AdminGuard component, useIsCallerAdmin hook, and extensive access control logic in backend with AccessControl module and MixinAuthorization. No requirement specifies admin roles, permissions, or access control features.",
+      "description": "Backend includes postId field in Comment type",
+      "reason": "REQ-31 and REQ-32 do not specify a postId field in the Comment record. Comments are nested within Post records, making postId redundant. The backend adds this unrequested field.",
       "evidence": [
-        "frontend/src/components/AdminGuard.tsx",
-        "frontend/src/hooks/useIsCallerAdmin.ts",
         "backend/main.mo"
-      ]
-    },
-    {
-      "description": "Blob storage system with external storage capabilities",
-      "reason": "The backend includes Storage and MixinStorage modules with ExternalBlob functionality and upload progress tracking. While media storage is implied by mediaUrl fields in requirements, the implementation of a full blob storage system with external storage and upload progress exceeds the specified requirements.",
-      "evidence": [
-        "backend/main.mo",
-        "frontend/src/components/CreatePostForm.tsx"
-      ]
-    },
-    {
-      "description": "Payment success and failure dedicated pages",
-      "reason": "The routing configuration includes PaymentSuccess and PaymentFailure page routes. REQ-10 only specifies 'User is redirected back to app with success message' after payment, not dedicated success/failure pages.",
-      "evidence": [
-        "frontend/src/App.tsx"
-      ]
-    },
-    {
-      "description": "Mark notification as read functionality",
-      "reason": "The implementation includes useMarkNotificationAsRead hook and notification read/unread UI management. REQ-18 specifies tracking read status in the data model, but REQ-19 only requires fetching notifications, not marking them as read.",
-      "evidence": [
-        "frontend/src/components/NotificationBell.tsx",
-        "frontend/src/hooks/useMarkNotificationAsRead.ts"
       ]
     }
   ],
-  "confidence": 0.82,
+  "confidence": 0.92,
   "changed_files": [
-    "all_files_summary.json",
     "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
-    "frontend/src/components/AdminGuard.tsx",
-    "frontend/src/components/AuthGuard.tsx",
-    "frontend/src/components/CommentSection.tsx",
-    "frontend/src/components/CreatePostForm.tsx",
-    "frontend/src/components/CreateStoryForm.tsx",
-    "frontend/src/components/Layout.tsx",
-    "frontend/src/components/LoginButton.tsx",
-    "frontend/src/components/Navbar.tsx",
-    "frontend/src/components/NotificationBell.tsx",
-    "frontend/src/components/PostCard.tsx",
-    "frontend/src/components/ProfileSetupModal.tsx",
-    "frontend/src/components/ReelPlayer.tsx",
-    "frontend/src/components/StoryViewer.tsx",
-    "frontend/src/components/StripeSetup.tsx",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useAddComment.ts",
-    "frontend/src/hooks/useCreateCheckoutSession.ts",
-    "frontend/src/hooks/useCreatePost.ts",
-    "frontend/src/hooks/useCreateStory.ts",
-    "frontend/src/hooks/useGetActiveStories.ts",
-    "frontend/src/hooks/useGetCallerUserProfile.ts",
-    "frontend/src/hooks/useGetComments.ts",
-    "frontend/src/hooks/useGetFeed.ts",
-    "frontend/src/hooks/useGetNotifications.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useIsCallerAdmin.ts",
-    "frontend/src/hooks/useIsStripeConfigured.ts",
-    "frontend/src/hooks/useLikePost.ts",
-    "frontend/src/hooks/useMarkNotificationAsRead.ts",
-    "frontend/src/hooks/useSaveCallerUserProfile.ts",
-    "frontend/src/hooks/useSetStripeConfiguration.ts",
-    "frontend/src/hooks/useSubscribeUser.ts",
-    "frontend/src/hooks/useViewStory.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
     "frontend/src/pages/Home.tsx",
-    "frontend/src/pages/PaymentFailure.tsx",
-    "frontend/src/pages/PaymentSuccess.tsx",
-    "frontend/src/pages/Profile.tsx",
-    "frontend/src/pages/Reels.tsx",
-    "frontend/src/pages/Stories.tsx",
-    "frontend/src/pages/Subscribe.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

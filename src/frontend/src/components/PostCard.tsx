@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, MoreVertical } from 'lucide-react';
+import { Heart, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -95,7 +95,7 @@ export default function PostCard({ post, authorUsername }: PostCardProps) {
             className="gap-2"
           >
             <MessageCircle className="w-5 h-5" />
-            <span>Comment</span>
+            <span>{post.comments.length > 0 ? post.comments.length : 'Comment'}</span>
           </Button>
         </div>
 

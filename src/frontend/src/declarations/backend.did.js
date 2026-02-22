@@ -47,6 +47,7 @@ export const PostView = IDL.Record({
   'createdAt' : Time,
   'author' : IDL.Principal,
   'likes' : IDL.Vec(IDL.Principal),
+  'comments' : IDL.Vec(Comment),
 });
 export const StoryView = IDL.Record({
   'id' : IDL.Nat,
@@ -128,6 +129,11 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addComment' : IDL.Func([IDL.Nat, IDL.Text], [Comment], []),
+  'addCommentBackend' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Principal],
+      [IDL.Bool],
+      [],
+    ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createCheckoutSession' : IDL.Func(
       [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
@@ -205,6 +211,7 @@ export const idlFactory = ({ IDL }) => {
     'createdAt' : Time,
     'author' : IDL.Principal,
     'likes' : IDL.Vec(IDL.Principal),
+    'comments' : IDL.Vec(Comment),
   });
   const StoryView = IDL.Record({
     'id' : IDL.Nat,
@@ -283,6 +290,11 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addComment' : IDL.Func([IDL.Nat, IDL.Text], [Comment], []),
+    'addCommentBackend' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Principal],
+        [IDL.Bool],
+        [],
+      ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createCheckoutSession' : IDL.Func(
         [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],

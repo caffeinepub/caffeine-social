@@ -2,22 +2,24 @@ import Array "mo:core/Array";
 import Time "mo:core/Time";
 import List "mo:core/List";
 import Set "mo:core/Set";
+import Iter "mo:core/Iter";
 import Map "mo:core/Map";
 import Order "mo:core/Order";
+import Text "mo:core/Text";
 import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
-import Iter "mo:core/Iter";
-import AccessControl "authorization/access-control";
-import Stripe "stripe/stripe";
-import OutCall "http-outcalls/outcall";
-import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
+import Storage "blob-storage/Storage";
+import OutCall "http-outcalls/outcall";
+import Stripe "stripe/stripe";
+import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Runtime "mo:core/Runtime";
 
 actor {
+  include MixinStorage();
+
   // Components
   let accessControlState = AccessControl.initState();
-  include MixinStorage();
   include MixinAuthorization(accessControlState);
 
   // Stripe configuration
@@ -66,6 +68,7 @@ actor {
     content : Text;
     media : ?Storage.ExternalBlob;
     likes : [Principal];
+    comments : [Comment];
     createdAt : Time.Time;
   };
 
@@ -93,7 +96,6 @@ actor {
   // Data Stores
   let posts = Map.empty<Nat, Post>();
   let stories = Map.empty<Nat, Story>();
-  let comments = Map.empty<Nat, Comment>();
   let notifications = Map.empty<Nat, Notification>();
 
   // Post persistent data
@@ -101,9 +103,10 @@ actor {
     content : Text;
     createdAt : Time.Time;
     id : Nat;
-    likes : Set.Set<Principal>;
     author : Principal;
     media : ?Storage.ExternalBlob;
+    likes : Set.Set<Principal>;
+    comments : List.List<Comment>;
   };
 
   // Story persistent data
@@ -115,13 +118,13 @@ actor {
     views : Set.Set<Principal>;
   };
 
-  // Initialize persistent parent stores
+  // Initialize persistent data stores
   module PersistentStore {
     public func init<K, V>() : (Map.Map<K, V>) {
       Map.empty<K, V>();
     };
   };
-  let userProfiles = PersistentStore.init<Principal, UserProfile>();
+
   // Helper function to create notifications
   private func createNotification(recipientId : Principal, _type : Text, relatedId : Nat, senderId : Principal) {
     let notification : Notification = {
@@ -143,6 +146,8 @@ actor {
     email : Text;
     subscription : Bool;
   };
+
+  let userProfiles = PersistentStore.init<Principal, UserProfile>();
 
   // User Profile Functions (required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -177,6 +182,7 @@ actor {
       content;
       media;
       likes = Set.empty<Principal>();
+      comments = List.empty<Comment>();
       createdAt = Time.now();
     };
 
@@ -187,6 +193,7 @@ actor {
     {
       post with
       likes = post.likes.toArray();
+      comments = post.comments.toArray();
     };
   };
 
@@ -217,6 +224,7 @@ actor {
         {
           post with
           likes = post.likes.toArray();
+          comments = post.comments.toArray();
         };
       }
     ).sort(PostView.compareByCreatedAt);
@@ -256,9 +264,15 @@ actor {
       createdAt = Time.now();
     };
 
-    comments.add(nextCommentId, comment);
+    // Add comment to post's comments list
+    post.comments.add(comment);
+
+    // Update post in the posts map
+    posts.add(postId, post);
+
     nextCommentId += 1;
 
+    // Create notification for post author (if not commenting on own post)
     if (post.author != caller) {
       createNotification(post.author, "comment", postId, caller);
     };
@@ -266,11 +280,53 @@ actor {
     comment;
   };
 
+  public shared ({ caller }) func addCommentBackend(postId : Nat, text : Text, author : Principal) : async Bool {
+    // Authorization check: Only users can add comments
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can add comments");
+    };
+
+    // Verify that the caller is the author they claim to be
+    // This prevents impersonation attacks
+    if (caller != author) {
+      Runtime.trap("Unauthorized: Cannot create comments on behalf of other users");
+    };
+
+    let comment : Comment = {
+      id = nextCommentId;
+      postId;
+      author;
+      content = text;
+      createdAt = Time.now();
+    };
+
+    switch (posts.get(postId)) {
+      case (?post) {
+        post.comments.add(comment);
+        posts.add(postId, post);
+        nextCommentId += 1;
+
+        // Create notification for post author (if not commenting on own post)
+        if (post.author != caller) {
+          createNotification(post.author, "comment", postId, caller);
+        };
+
+        true;
+      };
+      case (null) { false };
+    };
+  };
+
   public query ({ caller }) func getComments(postId : Nat) : async [Comment] {
-    let filtered = comments.values().toArray().filter(
-      func(c) { c.postId == postId }
-    );
-    filtered.sort(Comment.compareByCreatedAt);
+    // No authorization check - comments are public like the feed
+    // This maintains consistency with getFeed which also has no auth check
+    switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?post) {
+        let comments = post.comments.toArray();
+        comments.sort(Comment.compareByCreatedAt);
+      };
+    };
   };
 
   // Notification Functions

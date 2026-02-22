@@ -1,19 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Build a social media platform with posts, stories, reels, subscriptions, and engagement features (likes, comments, notifications).
+**Goal:** Implement complete Home.tsx feed page with post display, comments viewing, and add comment functionality with automatic refresh.
 
 **Planned changes:**
-- Implement Motoko backend with User, Post, Story, Comment, and Notification data models
-- Create backend functions for creating posts, liking posts, adding comments, managing subscriptions, and fetching feeds
-- Build frontend components: PostCard, StoryViewer, ReelPlayer, and Navbar
-- Create Home page displaying post feed with infinite scroll
-- Create Profile page showing user information and their posts
-- Create Subscribe page with Stripe checkout integration
-- Implement comment system with backend storage and retrieval
-- Add notification tracking for likes, comments, and follows
-- Apply cohesive visual theme with warm colors (oranges, yellows, corals), rounded typography, and card-based layouts with shadows and smooth transitions
-- Use Internet Identity for authentication
-- Store all data in IC canisters without external databases
+- Update Home.tsx to fetch and display posts from backend in centered feed layout with gray background
+- Add automatic feed refresh polling every 5 seconds using setInterval
+- Display comments section below each post showing author and comment text
+- Add comment input form with text field and 'Post' button supporting Enter key submission
+- Implement handleAddComment function to submit comments via backend and refresh feed
+- Add addComment backend function in main.mo to create and append comments to posts
+- Define TypeScript Comment and Post type interfaces in Home.tsx
 
-**User-visible outcome:** Users can create posts with media, view a chronological feed, like and comment on posts, view stories in a carousel, watch reels with video player controls, subscribe to premium features via Stripe, view their profile with posts, and receive notifications for engagement activities.
+**User-visible outcome:** Users can view a feed of posts with their comments, add new comments to any post using the input form or Enter key, and see the feed automatically update every 5 seconds to show new content.
