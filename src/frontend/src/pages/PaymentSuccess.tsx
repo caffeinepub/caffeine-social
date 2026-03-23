@@ -1,10 +1,16 @@
-import { useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { CheckCircle, ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useSubscribeUser } from '../hooks/useSubscribeUser';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowRight, CheckCircle } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useSubscribeUser } from "../hooks/useSubscribeUser";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -13,10 +19,10 @@ export default function PaymentSuccess() {
   useEffect(() => {
     subscribeUser(undefined, {
       onSuccess: () => {
-        toast.success('Welcome to Premium! 🎉');
+        toast.success("Welcome to Premium! 🎉");
       },
       onError: (error) => {
-        console.error('Failed to update subscription:', error);
+        console.error("Failed to update subscription:", error);
       },
     });
   }, [subscribeUser]);
@@ -35,9 +41,13 @@ export default function PaymentSuccess() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Your premium features are now active. Enjoy your enhanced experience!
+            Your premium features are now active. Enjoy your enhanced
+            experience!
           </p>
-          <Button onClick={() => navigate({ to: '/profile' })} className="w-full gap-2">
+          <Button
+            onClick={() => navigate({ to: "/profile" })}
+            className="w-full gap-2"
+          >
             Go to Profile
             <ArrowRight className="w-4 h-4" />
           </Button>

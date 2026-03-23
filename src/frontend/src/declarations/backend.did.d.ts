@@ -68,10 +68,16 @@ export interface TransformationOutput {
   'body' : Uint8Array,
   'headers' : Array<http_header>,
 }
+export interface User {
+  'followers' : Array<Principal>,
+  'following' : Array<Principal>,
+}
 export interface UserProfile {
   'username' : string,
   'subscription' : boolean,
   'email' : string,
+  'followers' : [] | [Array<Principal>],
+  'following' : [] | [Array<Principal>],
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -112,6 +118,7 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addComment' : ActorMethod<[bigint, string], Comment>,
   'addCommentBackend' : ActorMethod<[bigint, string, Principal], boolean>,
+  'amIFollowedBy' : ActorMethod<[Principal], boolean>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],
@@ -119,15 +126,26 @@ export interface _SERVICE {
   >,
   'createPost' : ActorMethod<[string, [] | [ExternalBlob]], PostView>,
   'createStory' : ActorMethod<[[] | [ExternalBlob], bigint], StoryView>,
+  'createUser' : ActorMethod<[], undefined>,
+  'followUser' : ActorMethod<[Principal], undefined>,
   'getActiveStories' : ActorMethod<[], Array<StoryView>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getComments' : ActorMethod<[bigint], Array<Comment>>,
   'getFeed' : ActorMethod<[], Array<PostView>>,
+  'getFollowers' : ActorMethod<[Principal], Array<Principal>>,
+  'getFollowing' : ActorMethod<[Principal], Array<Principal>>,
   'getNotifications' : ActorMethod<[], Array<Notification>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
+  'getUserData' : ActorMethod<[Principal], [] | [User]>,
+  'getUserPosts' : ActorMethod<[Principal], Array<PostView>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getUserStats' : ActorMethod<
+    [Principal],
+    { 'followers' : bigint, 'following' : bigint }
+  >,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isFollowing' : ActorMethod<[Principal], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
   'likePost' : ActorMethod<[bigint], undefined>,
   'markNotificationAsRead' : ActorMethod<[bigint], undefined>,
@@ -135,6 +153,7 @@ export interface _SERVICE {
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'subscribeUser' : ActorMethod<[], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'unfollowUser' : ActorMethod<[Principal], undefined>,
   'viewStory' : ActorMethod<[bigint], StoryView>,
 }
 export declare const idlService: IDL.ServiceClass;

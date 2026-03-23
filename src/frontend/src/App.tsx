@@ -1,15 +1,23 @@
-import { RouterProvider, createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
-import { ThemeProvider } from 'next-themes';
-import { Toaster } from '@/components/ui/sonner';
-import Layout from './components/Layout';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
-import Subscribe from './pages/Subscribe';
-import Stories from './pages/Stories';
-import Reels from './pages/Reels';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentFailure from './pages/PaymentFailure';
-import AuthGuard from './components/AuthGuard';
+import { Toaster } from "@/components/ui/sonner";
+import {
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
+import { ThemeProvider } from "next-themes";
+import AuthGuard from "./components/AuthGuard";
+import Layout from "./components/Layout";
+import Explore from "./pages/Explore";
+import Home from "./pages/Home";
+import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
+import PaymentFailure from "./pages/PaymentFailure";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import Profile from "./pages/Profile";
+import Reels from "./pages/Reels";
+import Stories from "./pages/Stories";
+import Subscribe from "./pages/Subscribe";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -21,43 +29,52 @@ const rootRoute = createRootRoute({
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: "/",
   component: Home,
 });
-
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/profile',
+  path: "/profile",
   component: Profile,
 });
-
 const subscribeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/subscribe',
+  path: "/subscribe",
   component: Subscribe,
 });
-
 const storiesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/stories',
+  path: "/stories",
   component: Stories,
 });
-
 const reelsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/reels',
+  path: "/reels",
   component: Reels,
 });
-
+const exploreRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/explore",
+  component: Explore,
+});
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/notifications",
+  component: Notifications,
+});
+const messagesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/messages",
+  component: Messages,
+});
 const paymentSuccessRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/payment-success',
+  path: "/payment-success",
   component: PaymentSuccess,
 });
-
 const paymentFailureRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/payment-failure',
+  path: "/payment-failure",
   component: PaymentFailure,
 });
 
@@ -67,13 +84,16 @@ const routeTree = rootRoute.addChildren([
   subscribeRoute,
   storiesRoute,
   reelsRoute,
+  exploreRoute,
+  notificationsRoute,
+  messagesRoute,
   paymentSuccessRoute,
   paymentFailureRoute,
 ]);
 
 const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
@@ -81,7 +101,7 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
       <RouterProvider router={router} />
       <Toaster />
     </ThemeProvider>

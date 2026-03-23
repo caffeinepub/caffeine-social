@@ -1,12 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { StoryView } from '../backend';
+import { useQuery } from "@tanstack/react-query";
+import type { StoryView } from "../backend";
+import { useActor } from "./useActor";
 
 export function useGetActiveStories() {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<StoryView[]>({
-    queryKey: ['activeStories'],
+    queryKey: ["activeStories"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getActiveStories();

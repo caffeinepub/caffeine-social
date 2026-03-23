@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Play, Pause } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useLikePost } from '../hooks/useLikePost';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import type { PostView } from '../backend';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Heart, MessageCircle, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { PostView } from "../backend";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useLikePost } from "../hooks/useLikePost";
 
 interface ReelPlayerProps {
   post: PostView;
@@ -12,7 +12,11 @@ interface ReelPlayerProps {
   isInView: boolean;
 }
 
-export default function ReelPlayer({ post, authorUsername, isInView }: ReelPlayerProps) {
+export default function ReelPlayer({
+  post,
+  authorUsername,
+  isInView,
+}: ReelPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const { identity } = useInternetIdentity();
@@ -55,24 +59,30 @@ export default function ReelPlayer({ post, authorUsername, isInView }: ReelPlaye
   return (
     <div className="relative w-full h-screen snap-start bg-black">
       {post.media && (
+        // biome-ignore lint/a11y/useMediaCaption: reels player
         <video
           ref={videoRef}
           src={post.media.getDirectURL()}
           className="w-full h-full object-contain"
           loop
           playsInline
-          onClick={togglePlay}
         />
       )}
 
-      {/* Play/Pause overlay */}
+      {/* Play/Pause overlay - clickable area */}
+      <button
+        type="button"
+        className="absolute inset-0 w-full h-full cursor-pointer bg-transparent"
+        onClick={togglePlay}
+        aria-label={isPlaying ? "Pause" : "Play"}
+      />
+
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
           <Button
             variant="ghost"
             size="icon"
-            onClick={togglePlay}
-            className="w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 text-white"
+            className="w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 text-white pointer-events-none"
           >
             <Play className="w-10 h-10" />
           </Button>
@@ -80,33 +90,39 @@ export default function ReelPlayer({ post, authorUsername, isInView }: ReelPlaye
       )}
 
       {/* Info overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
         <div className="flex items-end justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Avatar className="w-10 h-10 border-2 border-white">
                 <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white">
-                  {authorUsername?.[0]?.toUpperCase() || '?'}
+                  {authorUsername?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-white font-medium">{authorUsername || 'Anonymous'}</span>
+              <span className="text-white font-medium">
+                {authorUsername || "Anonymous"}
+              </span>
             </div>
             <p className="text-white text-sm">{post.content}</p>
           </div>
 
-          <div className="flex flex-col gap-4 ml-4">
+          <div className="flex flex-col gap-4 ml-4 pointer-events-auto">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleLike}
               disabled={isPending}
               className={`rounded-full ${
-                isLiked ? 'text-red-500 hover:text-red-600' : 'text-white hover:bg-white/20'
+                isLiked
+                  ? "text-red-500 hover:text-red-600"
+                  : "text-white hover:bg-white/20"
               }`}
             >
-              <Heart className={`w-8 h-8 ${isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-8 h-8 ${isLiked ? "fill-current" : ""}`} />
             </Button>
-            <div className="text-center text-white text-sm">{post.likes.length}</div>
+            <div className="text-center text-white text-sm">
+              {post.likes.length}
+            </div>
 
             <Button
               variant="ghost"

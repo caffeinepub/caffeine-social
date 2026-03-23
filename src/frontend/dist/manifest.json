@@ -1,0 +1,18 @@
+{
+  "name": "Saminsta",
+  "short_name": "Saminsta",
+  "description": "Instagram-like social media app on Internet Computer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#c026d3",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/generated/saminsta-icon.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

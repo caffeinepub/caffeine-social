@@ -1,11 +1,17 @@
-import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { useCreateStory } from '../hooks/useCreateStory';
-import { ExternalBlob } from '../backend';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { ExternalBlob } from "../backend";
+import { useCreateStory } from "../hooks/useCreateStory";
 
 export default function CreateStoryForm() {
   const [open, setOpen] = useState(false);
@@ -18,7 +24,7 @@ export default function CreateStoryForm() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+        toast.error("File size must be less than 10MB");
         return;
       }
       setMediaFile(file);
@@ -30,15 +36,17 @@ export default function CreateStoryForm() {
 
   const handleSubmit = async () => {
     if (!mediaFile) {
-      toast.error('Please select a photo for your story');
+      toast.error("Please select a photo for your story");
       return;
     }
 
     const arrayBuffer = await mediaFile.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    const mediaBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
-      setUploadProgress(percentage);
-    });
+    const mediaBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
+      (percentage) => {
+        setUploadProgress(percentage);
+      },
+    );
 
     createStory(
       { media: mediaBlob, expirationHours: BigInt(24) },
@@ -48,12 +56,12 @@ export default function CreateStoryForm() {
           setMediaPreview(null);
           setUploadProgress(0);
           setOpen(false);
-          toast.success('Story created successfully!');
+          toast.success("Story created successfully!");
         },
         onError: (error) => {
-          toast.error('Failed to create story: ' + error.message);
+          toast.error(`Failed to create story: ${error.message}`);
         },
-      }
+      },
     );
   };
 
@@ -71,7 +79,11 @@ export default function CreateStoryForm() {
         <div className="space-y-4">
           {mediaPreview ? (
             <div className="relative rounded-lg overflow-hidden bg-muted">
-              <img src={mediaPreview} alt="Preview" className="w-full h-auto max-h-96 object-cover" />
+              <img
+                src={mediaPreview}
+                alt="Preview"
+                className="w-full h-auto max-h-96 object-cover"
+              />
               <Button
                 type="button"
                 variant="destructive"
@@ -87,15 +99,19 @@ export default function CreateStoryForm() {
               </Button>
             </div>
           ) : (
-            <div
-              onClick={() => document.getElementById('story-media-input')?.click()}
-              className="border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary transition-colors"
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById("story-media-input")?.click()
+              }
+              className="w-full border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary transition-colors"
             >
               <Plus className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Click to select a photo</p>
-            </div>
+              <p className="text-sm text-muted-foreground">
+                Click to select a photo
+              </p>
+            </button>
           )}
-
           <input
             id="story-media-input"
             type="file"
@@ -103,7 +119,6 @@ export default function CreateStoryForm() {
             onChange={handleFileChange}
             className="hidden"
           />
-
           {uploadProgress > 0 && uploadProgress < 100 && (
             <div className="space-y-2">
               <Progress value={uploadProgress} />
@@ -112,9 +127,12 @@ export default function CreateStoryForm() {
               </p>
             </div>
           )}
-
-          <Button onClick={handleSubmit} disabled={isPending || !mediaFile} className="w-full">
-            {isPending ? 'Creating Story...' : 'Share Story'}
+          <Button
+            onClick={handleSubmit}
+            disabled={isPending || !mediaFile}
+            className="w-full"
+          >
+            {isPending ? "Creating Story..." : "Share Story"}
           </Button>
         </div>
       </DialogContent>

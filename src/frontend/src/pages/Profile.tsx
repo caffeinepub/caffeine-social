@@ -1,111 +1,227 @@
-import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import { useGetFeed } from '../hooks/useGetFeed';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import PostCard from '../components/PostCard';
-import { Loader2, Crown } from 'lucide-react';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bookmark, Crown, Film, Grid3X3, Loader2 } from "lucide-react";
+import { useState } from "react";
+import type { PostView } from "../backend";
+import LoginButton from "../components/LoginButton";
+import { useGetUserPosts } from "../hooks/useGetUserPosts";
+import { useGetUserProfile } from "../hooks/useGetUserProfile";
+import { useGetUserStats } from "../hooks/useGetUserStats";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function PostGrid({ posts }: { posts: PostView[] }) {
+  const GRADIENT_PLACEHOLDERS = [
+    "from-violet-900 to-pink-700",
+    "from-blue-900 to-cyan-600",
+    "from-rose-900 to-orange-600",
+    "from-emerald-900 to-teal-600",
+    "from-amber-900 to-yellow-600",
+    "from-indigo-900 to-violet-600",
+  ];
+
+  if (posts.length === 0) {
+    return (
+      <div className="text-center py-16" data-ocid="profile.empty_state">
+        <Grid3X3 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+        <p className="font-semibold">No Posts Yet</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          When you share photos, they'll appear here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-0.5" data-ocid="profile.list">
+      {posts.map((post, idx) => (
+        <div
+          key={post.id.toString()}
+          className="aspect-square overflow-hidden group cursor-pointer"
+          data-ocid={`profile.item.${idx + 1}`}
+        >
+          {post.media ? (
+            <img
+              src={post.media.getDirectURL()}
+              alt="Post"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div
+              className={`w-full h-full bg-gradient-to-br ${GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]} flex items-center justify-center`}
+            >
+              <p className="text-white text-xs text-center px-2 line-clamp-3 font-medium">
+                {post.content}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Profile() {
   const { identity } = useInternetIdentity();
-  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
-  const { data: allPosts = [], isLoading: postsLoading } = useGetFeed();
+  const currentUserPrincipal = identity?.getPrincipal();
+  const [editMode, setEditMode] = useState(false);
 
-  const currentUserPrincipal = identity?.getPrincipal().toString();
-  const userPosts = allPosts.filter((post) => post.author.toString() === currentUserPrincipal);
+  const { data: userProfile, isLoading: profileLoading } =
+    useGetUserProfile(currentUserPrincipal);
+  const { data: userPosts = [], isLoading: postsLoading } =
+    useGetUserPosts(currentUserPrincipal);
+  const { data: userStats, isLoading: statsLoading } =
+    useGetUserStats(currentUserPrincipal);
 
-  if (profileLoading || postsLoading) {
+  if (!identity) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading profile...</p>
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-24 h-24 gradient-bg rounded-full mx-auto mb-6 flex items-center justify-center">
+          <span className="text-white text-4xl font-bold">?</span>
         </div>
+        <p className="text-xl font-bold mb-2">Sign in to view profile</p>
+        <p className="text-sm text-muted-foreground mb-6">
+          Login to view and manage your Saminsta profile.
+        </p>
+        <LoginButton />
       </div>
     );
   }
 
-  if (!userProfile) {
+  if (profileLoading || postsLoading || statsLoading) {
     return (
-      <div className="text-center py-16">
-        <p className="text-xl font-semibold mb-2">Profile not found</p>
-        <p className="text-muted-foreground">Please complete your profile setup</p>
+      <div
+        className="flex items-center justify-center min-h-[60vh]"
+        data-ocid="profile.loading_state"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const username =
+    userProfile?.username ??
+    currentUserPrincipal?.toString().slice(0, 12) ??
+    "user";
+  const followersCount = userStats ? Number(userStats.followers) : 0;
+  const followingCount = userStats ? Number(userStats.following) : 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-6">
-            <Avatar className="w-24 h-24">
-              <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white text-3xl">
-                {getInitials(userProfile.username)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <CardTitle className="text-3xl">{userProfile.username}</CardTitle>
-                {userProfile.subscription && (
-                  <Badge className="gap-1 bg-gradient-to-r from-orange-500 to-amber-500">
-                    <Crown className="w-3 h-3" />
-                    Premium
-                  </Badge>
-                )}
-              </div>
-              <p className="text-muted-foreground">{userProfile.email}</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-primary">{userPosts.length}</p>
-              <p className="text-sm text-muted-foreground">Posts</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">
-                {userPosts.reduce((sum, post) => sum + post.likes.length, 0)}
-              </p>
-              <p className="text-sm text-muted-foreground">Likes</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">
-                {userProfile.subscription ? 'Active' : 'Free'}
-              </p>
-              <p className="text-sm text-muted-foreground">Plan</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="max-w-xl mx-auto">
+      {/* Cover gradient */}
+      <div className="h-32 gradient-bg w-full" />
 
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Your Posts</h2>
-        {userPosts.length === 0 ? (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <p className="text-muted-foreground">You haven't posted anything yet</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {userPosts.map((post) => (
-              <PostCard key={post.id.toString()} post={post} authorUsername={userProfile.username} />
-            ))}
+      {/* Avatar + info */}
+      <div className="px-4 pb-4">
+        <div className="flex items-end justify-between -mt-12 mb-4">
+          <div className="story-ring w-24 h-24">
+            <div className="story-ring-inner w-full h-full">
+              <Avatar className="w-full h-full">
+                <AvatarFallback className="gradient-bg text-white text-2xl font-bold">
+                  {getInitials(username)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
-        )}
+          <Button
+            onClick={() => setEditMode(!editMode)}
+            variant="outline"
+            size="sm"
+            className="border-border hover:border-primary hover:text-primary"
+            data-ocid="profile.edit_button"
+          >
+            Edit Profile
+          </Button>
+        </div>
+
+        {/* Name & bio */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold">{username}</h1>
+            {userProfile?.subscription && (
+              <span className="flex items-center gap-1 gradient-bg text-white text-xs px-2 py-0.5 rounded-full">
+                <Crown className="w-3 h-3" /> Premium
+              </span>
+            )}
+          </div>
+          {userProfile?.email && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {userProfile.email}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground mt-1">
+            {currentUserPrincipal?.toString().slice(0, 20)}...
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="flex gap-6 mb-4" data-ocid="profile.panel">
+          <div className="text-center">
+            <p className="text-xl font-bold">{userPosts.length}</p>
+            <p className="text-xs text-muted-foreground">Posts</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xl font-bold">{followersCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xl font-bold">{followingCount}</p>
+            <p className="text-xs text-muted-foreground">Following</p>
+          </div>
+        </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="posts">
+        <TabsList className="w-full bg-transparent border-b border-border rounded-none h-auto px-0">
+          <TabsTrigger
+            value="posts"
+            className="flex-1 flex items-center gap-2 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground"
+            data-ocid="profile.tab"
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </TabsTrigger>
+          <TabsTrigger
+            value="reels"
+            className="flex-1 flex items-center gap-2 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground"
+            data-ocid="profile.tab"
+          >
+            <Film className="w-4 h-4" />
+          </TabsTrigger>
+          <TabsTrigger
+            value="saved"
+            className="flex-1 flex items-center gap-2 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground"
+            data-ocid="profile.tab"
+          >
+            <Bookmark className="w-4 h-4" />
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="posts" className="mt-0">
+          <PostGrid posts={userPosts} />
+        </TabsContent>
+        <TabsContent value="reels" className="mt-0">
+          <PostGrid posts={userPosts.filter((p) => !!p.media)} />
+        </TabsContent>
+        <TabsContent value="saved" className="mt-0">
+          <div className="text-center py-16" data-ocid="profile.empty_state">
+            <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="font-semibold">No Saved Posts</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Posts you save will appear here.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

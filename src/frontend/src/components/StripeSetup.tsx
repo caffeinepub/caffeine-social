@@ -1,18 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useSetStripeConfiguration } from '../hooks/useSetStripeConfiguration';
-import { useIsStripeConfigured } from '../hooks/useIsStripeConfigured';
-import AdminGuard from './AdminGuard';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useIsStripeConfigured } from "../hooks/useIsStripeConfigured";
+import { useSetStripeConfiguration } from "../hooks/useSetStripeConfiguration";
+import AdminGuard from "./AdminGuard";
 
 export default function StripeSetup() {
   const { data: isConfigured, isLoading } = useIsStripeConfigured();
   const { mutate: setConfig, isPending } = useSetStripeConfiguration();
-  const [secretKey, setSecretKey] = useState('');
-  const [countries, setCountries] = useState('US,CA,GB');
+  const [secretKey, setSecretKey] = useState("");
+  const [countries, setCountries] = useState("US,CA,GB");
 
   if (isLoading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -26,34 +32,31 @@ export default function StripeSetup() {
     e.preventDefault();
 
     if (!secretKey.trim()) {
-      toast.error('Please enter your Stripe secret key');
+      toast.error("Please enter your Stripe secret key");
       return;
     }
 
     const allowedCountries = countries
-      .split(',')
+      .split(",")
       .map((c) => c.trim().toUpperCase())
       .filter((c) => c.length === 2);
 
     if (allowedCountries.length === 0) {
-      toast.error('Please enter at least one valid country code');
+      toast.error("Please enter at least one valid country code");
       return;
     }
 
     setConfig(
-      {
-        secretKey: secretKey.trim(),
-        allowedCountries,
-      },
+      { secretKey: secretKey.trim(), allowedCountries },
       {
         onSuccess: () => {
-          toast.success('Stripe configured successfully!');
-          setSecretKey('');
+          toast.success("Stripe configured successfully!");
+          setSecretKey("");
         },
         onError: (error) => {
-          toast.error('Failed to configure Stripe: ' + error.message);
+          toast.error(`Failed to configure Stripe: ${error.message}`);
         },
-      }
+      },
     );
   };
 
@@ -63,7 +66,8 @@ export default function StripeSetup() {
         <CardHeader>
           <CardTitle>Configure Stripe Payments</CardTitle>
           <CardDescription>
-            Set up Stripe to enable subscription payments. You'll need your Stripe secret key.
+            Set up Stripe to enable subscription payments. You&apos;ll need your
+            Stripe secret key.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,7 +84,9 @@ export default function StripeSetup() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="countries">Allowed Countries (comma-separated)</Label>
+              <Label htmlFor="countries">
+                Allowed Countries (comma-separated)
+              </Label>
               <Input
                 id="countries"
                 placeholder="US,CA,GB"
@@ -93,7 +99,7 @@ export default function StripeSetup() {
               </p>
             </div>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Configuring...' : 'Configure Stripe'}
+              {isPending ? "Configuring..." : "Configure Stripe"}
             </Button>
           </form>
         </CardContent>

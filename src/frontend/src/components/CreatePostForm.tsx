@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { Image, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import { useCreatePost } from '../hooks/useCreatePost';
-import { ExternalBlob } from '../backend';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Image, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { ExternalBlob } from "../backend";
+import { useCreatePost } from "../hooks/useCreatePost";
 
 export default function CreatePostForm() {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -19,7 +19,7 @@ export default function CreatePostForm() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
+        toast.error("File size must be less than 10MB");
         return;
       }
       setMediaFile(file);
@@ -39,7 +39,7 @@ export default function CreatePostForm() {
     e.preventDefault();
 
     if (!content.trim()) {
-      toast.error('Post content cannot be empty');
+      toast.error("Post content cannot be empty");
       return;
     }
 
@@ -48,25 +48,27 @@ export default function CreatePostForm() {
     if (mediaFile) {
       const arrayBuffer = await mediaFile.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
-      mediaBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
-        setUploadProgress(percentage);
-      });
+      mediaBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
+        (percentage) => {
+          setUploadProgress(percentage);
+        },
+      );
     }
 
     createPost(
       { content: content.trim(), media: mediaBlob },
       {
         onSuccess: () => {
-          setContent('');
+          setContent("");
           setMediaFile(null);
           setMediaPreview(null);
           setUploadProgress(0);
-          toast.success('Post created successfully!');
+          toast.success("Post created successfully!");
         },
         onError: (error) => {
-          toast.error('Failed to create post: ' + error.message);
+          toast.error(`Failed to create post: ${error.message}`);
         },
-      }
+      },
     );
   };
 
@@ -85,10 +87,13 @@ export default function CreatePostForm() {
             rows={4}
             className="resize-none"
           />
-
           {mediaPreview && (
             <div className="relative rounded-lg overflow-hidden bg-muted">
-              <img src={mediaPreview} alt="Preview" className="w-full h-auto max-h-64 object-cover" />
+              <img
+                src={mediaPreview}
+                alt="Preview"
+                className="w-full h-auto max-h-64 object-cover"
+              />
               <Button
                 type="button"
                 variant="destructive"
@@ -101,7 +106,6 @@ export default function CreatePostForm() {
               </Button>
             </div>
           )}
-
           {uploadProgress > 0 && uploadProgress < 100 && (
             <div className="space-y-2">
               <Progress value={uploadProgress} />
@@ -110,13 +114,14 @@ export default function CreatePostForm() {
               </p>
             </div>
           )}
-
           <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => document.getElementById('post-media-input')?.click()}
+              onClick={() =>
+                document.getElementById("post-media-input")?.click()
+              }
               disabled={isPending}
               className="gap-2"
             >
@@ -130,8 +135,12 @@ export default function CreatePostForm() {
               onChange={handleFileChange}
               className="hidden"
             />
-            <Button type="submit" disabled={isPending || !content.trim()} className="ml-auto">
-              {isPending ? 'Posting...' : 'Post'}
+            <Button
+              type="submit"
+              disabled={isPending || !content.trim()}
+              className="ml-auto"
+            >
+              {isPending ? "Posting..." : "Post"}
             </Button>
           </div>
         </form>

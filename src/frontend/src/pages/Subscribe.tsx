@@ -1,169 +1,144 @@
-import { CreditCard, Check, Crown } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import { useCreateCheckoutSession } from '../hooks/useCreateCheckoutSession';
-import { useIsStripeConfigured } from '../hooks/useIsStripeConfigured';
-import StripeSetup from '../components/StripeSetup';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, CreditCard, Crown, Shield, Star, Zap } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import StripeSetup from "../components/StripeSetup";
+import { useCreateCheckoutSession } from "../hooks/useCreateCheckoutSession";
+import { useGetCallerUserProfile } from "../hooks/useGetCallerUserProfile";
+import { useIsStripeConfigured } from "../hooks/useIsStripeConfigured";
 
 export default function Subscribe() {
   const { data: userProfile } = useGetCallerUserProfile();
-  const { data: isStripeConfigured, isLoading: configLoading } = useIsStripeConfigured();
+  const { data: isStripeConfigured, isLoading: configLoading } =
+    useIsStripeConfigured();
   const { mutate: createCheckout, isPending } = useCreateCheckoutSession();
 
   const handleSubscribe = () => {
     const items = [
       {
-        productName: 'Caffeine Social Premium',
-        productDescription: 'Monthly subscription to Caffeine Social Premium',
+        productName: "Saminsta Premium",
+        productDescription: "Monthly premium subscription to Saminsta",
         priceInCents: BigInt(999),
-        currency: 'usd',
+        currency: "usd",
         quantity: BigInt(1),
       },
     ];
 
     const baseUrl = `${window.location.protocol}//${window.location.host}`;
-    const successUrl = `${baseUrl}/payment-success`;
-    const cancelUrl = `${baseUrl}/payment-failure`;
-
     createCheckout(
-      { items, successUrl, cancelUrl },
+      {
+        items,
+        successUrl: `${baseUrl}/payment-success`,
+        cancelUrl: `${baseUrl}/payment-failure`,
+      },
       {
         onSuccess: (session) => {
           if (!session?.url) {
-            toast.error('Failed to create checkout session');
+            toast.error("Failed to create checkout session");
             return;
           }
           window.location.href = session.url;
         },
-        onError: (error) => {
-          toast.error('Failed to start checkout: ' + error.message);
-        },
-      }
+        onError: (err) =>
+          toast.error(`Failed to start checkout: ${err.message}`),
+      },
     );
   };
 
   if (configLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!isStripeConfigured) {
-    return <StripeSetup />;
-  }
+  if (!isStripeConfigured) return <StripeSetup />;
 
   const features = [
-    'Ad-free experience',
-    'Exclusive content access',
-    'Priority support',
-    'Custom profile themes',
-    'Advanced analytics',
-    'Early access to new features',
+    { icon: Star, text: "Ad-free experience" },
+    { icon: Crown, text: "Exclusive premium badge" },
+    { icon: Zap, text: "Priority content visibility" },
+    { icon: Shield, text: "Advanced privacy controls" },
+    { icon: Check, text: "Early access to new features" },
+    { icon: Check, text: "Custom profile themes" },
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent">
-          Upgrade to Premium
+    <div className="max-w-lg mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 gradient-bg rounded-full mx-auto mb-4 flex items-center justify-center shadow-glow">
+          <Crown className="w-10 h-10 text-white" />
+        </div>
+        <h1 className="text-3xl font-bold mb-2">
+          <span className="gradient-text">Saminsta</span> Premium
         </h1>
-        <p className="text-xl text-muted-foreground">
-          Unlock exclusive features and support Caffeine Social
+        <p className="text-muted-foreground">
+          Unlock the full Saminsta experience
         </p>
       </div>
 
       {userProfile?.subscription && (
-        <Card className="mb-8 border-primary">
-          <CardContent className="py-6">
-            <div className="flex items-center justify-center gap-2 text-primary">
-              <Crown className="w-6 h-6" />
-              <p className="text-lg font-semibold">You're already a Premium member!</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="gradient-bg rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <Crown className="w-6 h-6 text-white" />
+          <p className="text-white font-semibold">
+            You&apos;re already a Premium member! 🎉
+          </p>
+        </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Free Plan</CardTitle>
-            <CardDescription>Perfect for getting started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <p className="text-4xl font-bold">$0</p>
-              <p className="text-muted-foreground">forever</p>
-            </div>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-primary" />
-                <span>Basic features</span>
+      {/* Pricing card */}
+      <Card
+        className="border-primary/50 bg-card shadow-glow mb-6"
+        data-ocid="subscribe.card"
+      >
+        <CardHeader className="text-center pb-2">
+          <div className="inline-flex items-baseline gap-1 justify-center">
+            <span className="text-5xl font-bold gradient-text">$9.99</span>
+            <span className="text-muted-foreground">/month</span>
+          </div>
+          <CardTitle className="text-sm text-muted-foreground font-normal">
+            Cancel anytime
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3 mb-6">
+            {features.map((f) => (
+              <li key={f.text} className="flex items-center gap-3">
+                <div className="w-5 h-5 gradient-bg rounded-full flex items-center justify-center flex-shrink-0">
+                  <f.icon className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm">{f.text}</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-primary" />
-                <span>Create posts</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-primary" />
-                <span>View stories</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+            ))}
+          </ul>
+          <Button
+            onClick={handleSubscribe}
+            disabled={isPending || userProfile?.subscription}
+            className="w-full gradient-bg border-0 text-white font-semibold hover:opacity-90 h-12 rounded-xl"
+            data-ocid="subscribe.primary_button"
+            size="lg"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing...
+              </>
+            ) : userProfile?.subscription ? (
+              "Already Subscribed ✓"
+            ) : (
+              <>
+                <CreditCard className="w-5 h-5 mr-2" /> Subscribe Now
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
-        <Card className="border-primary shadow-lg">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">Premium Plan</CardTitle>
-              <Badge className="bg-gradient-to-r from-orange-500 to-amber-500">
-                <Crown className="w-3 h-3 mr-1" />
-                Popular
-              </Badge>
-            </div>
-            <CardDescription>Everything you need to shine</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <p className="text-4xl font-bold">$9.99</p>
-              <p className="text-muted-foreground">per month</p>
-            </div>
-            <ul className="space-y-3 mb-6">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-primary" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              onClick={handleSubscribe}
-              disabled={isPending || userProfile?.subscription}
-              className="w-full gap-2"
-              size="lg"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
-                </>
-              ) : userProfile?.subscription ? (
-                'Already Subscribed'
-              ) : (
-                <>
-                  <CreditCard className="w-5 h-5" />
-                  Subscribe Now
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <p className="text-center text-xs text-muted-foreground">
+        Secure payment via Stripe. Your subscription helps support Saminsta.
+      </p>
     </div>
   );
 }

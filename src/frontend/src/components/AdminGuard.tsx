@@ -1,6 +1,11 @@
-import { useIsCallerAdmin } from '../hooks/useIsCallerAdmin';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldAlert } from 'lucide-react';
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ShieldAlert } from "lucide-react";
+import { useIsCallerAdmin } from "../hooks/useIsCallerAdmin";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -13,7 +18,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Checking permissions...</p>
         </div>
       </div>
@@ -28,7 +33,8 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-destructive" />
             <CardTitle>Access Denied</CardTitle>
             <CardDescription>
-              You don't have permission to access this page. Admin privileges are required.
+              You don&apos;t have permission to access this page. Admin
+              privileges are required.
             </CardDescription>
           </CardHeader>
         </Card>

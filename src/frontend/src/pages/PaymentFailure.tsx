@@ -1,7 +1,13 @@
-import { useNavigate } from '@tanstack/react-router';
-import { XCircle, ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, XCircle } from "lucide-react";
 
 export default function PaymentFailure() {
   const navigate = useNavigate();
@@ -20,15 +26,18 @@ export default function PaymentFailure() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Don't worry, you haven't been charged. Please try again or contact support if the
-            problem persists.
+            Don't worry, you haven't been charged. Please try again or contact
+            support if the problem persists.
           </p>
           <div className="flex flex-col gap-2">
-            <Button onClick={() => navigate({ to: '/subscribe' })} className="w-full">
+            <Button
+              onClick={() => navigate({ to: "/subscribe" })}
+              className="w-full"
+            >
               Try Again
             </Button>
             <Button
-              onClick={() => navigate({ to: '/' })}
+              onClick={() => navigate({ to: "/" })}
               variant="outline"
               className="w-full gap-2"
             >

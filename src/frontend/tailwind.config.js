@@ -9,7 +9,7 @@ export default {
     theme: {
         container: {
             center: true,
-            padding: '2rem',
+            padding: '1rem',
             screens: {
                 '2xl': '1400px'
             }
@@ -58,7 +58,8 @@ export default {
                 }
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+                display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -66,8 +67,8 @@ export default {
                 sm: 'calc(var(--radius) - 4px)'
             },
             boxShadow: {
-                xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
-                soft: '0 2px 8px -2px rgba(0,0,0,0.1)',
+                glow: '0 0 20px oklch(0.56 0.28 330 / 0.3)',
+                'glow-sm': '0 0 10px oklch(0.56 0.28 330 / 0.2)',
             },
             keyframes: {
                 'accordion-down': {
@@ -77,11 +78,22 @@ export default {
                 'accordion-up': {
                     from: { height: 'var(--radix-accordion-content-height)' },
                     to: { height: '0' }
-                }
+                },
+                'heart-pop': {
+                    '0%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(1.4)' },
+                    '100%': { transform: 'scale(1)' },
+                },
+                'fade-in': {
+                    from: { opacity: '0', transform: 'translateY(8px)' },
+                    to: { opacity: '1', transform: 'translateY(0)' },
+                },
             },
             animation: {
                 'accordion-down': 'accordion-down 0.2s ease-out',
-                'accordion-up': 'accordion-up 0.2s ease-out'
+                'accordion-up': 'accordion-up 0.2s ease-out',
+                'heart-pop': 'heart-pop 0.3s ease-in-out',
+                'fade-in': 'fade-in 0.3s ease-out',
             }
         }
     },

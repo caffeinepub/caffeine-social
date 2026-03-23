@@ -2,81 +2,140 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/assets/fonts/PlusJakartaSans.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+}
+
 @layer base {
-    :root {
-        --radius: 0.75rem;
-        --background: 0.98 0.02 35;
-        --foreground: 0.2 0.015 30;
-        --card: 1 0 0;
-        --card-foreground: 0.2 0.015 30;
-        --popover: 1 0 0;
-        --popover-foreground: 0.2 0.015 30;
-        --primary: 0.65 0.22 35;
-        --primary-foreground: 1 0 0;
-        --secondary: 0.95 0.03 50;
-        --secondary-foreground: 0.3 0.02 35;
-        --muted: 0.96 0.02 40;
-        --muted-foreground: 0.5 0.015 30;
-        --accent: 0.75 0.18 45;
-        --accent-foreground: 0.15 0.015 30;
-        --destructive: 0.55 0.22 25;
-        --destructive-foreground: 1 0 0;
-        --border: 0.92 0.02 40;
-        --input: 0.92 0.02 40;
-        --ring: 0.65 0.22 35;
-        --chart-1: 0.65 0.22 35;
-        --chart-2: 0.7 0.2 50;
-        --chart-3: 0.75 0.18 45;
-        --chart-4: 0.6 0.24 30;
-        --chart-5: 0.68 0.21 40;
-    }
+  :root {
+    --radius: 0.75rem;
+    /* Always dark — Saminsta dark theme */
+    --background: 0.08 0 0;
+    --foreground: 0.95 0 0;
+    --card: 0.13 0 0;
+    --card-foreground: 0.95 0 0;
+    --popover: 0.13 0 0;
+    --popover-foreground: 0.95 0 0;
+    --primary: 0.56 0.28 330;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.2 0 0;
+    --secondary-foreground: 0.9 0 0;
+    --muted: 0.18 0 0;
+    --muted-foreground: 0.6 0 0;
+    --accent: 0.52 0.27 285;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 1 0 0;
+    --border: 0.22 0 0;
+    --input: 0.22 0 0;
+    --ring: 0.56 0.28 330;
+    --chart-1: 0.56 0.28 330;
+    --chart-2: 0.52 0.27 285;
+    --chart-3: 0.65 0.22 200;
+    --chart-4: 0.7 0.2 50;
+    --chart-5: 0.6 0.24 25;
+  }
 
-    .dark {
-        --background: 0.15 0.015 30;
-        --foreground: 0.95 0.02 40;
-        --card: 0.2 0.015 30;
-        --card-foreground: 0.95 0.02 40;
-        --popover: 0.18 0.015 30;
-        --popover-foreground: 0.95 0.02 40;
-        --primary: 0.7 0.2 40;
-        --primary-foreground: 0.15 0.015 30;
-        --secondary: 0.25 0.02 35;
-        --secondary-foreground: 0.95 0.02 40;
-        --muted: 0.25 0.02 35;
-        --muted-foreground: 0.65 0.015 35;
-        --accent: 0.35 0.03 40;
-        --accent-foreground: 0.95 0.02 40;
-        --destructive: 0.5 0.24 25;
-        --destructive-foreground: 0.95 0.02 40;
-        --border: 0.3 0.02 35;
-        --input: 0.3 0.02 35;
-        --ring: 0.65 0.2 40;
-        --chart-1: 0.7 0.2 40;
-        --chart-2: 0.65 0.22 50;
-        --chart-3: 0.75 0.18 45;
-        --chart-4: 0.6 0.24 35;
-        --chart-5: 0.68 0.21 42;
-    }
+  .dark {
+    --background: 0.08 0 0;
+    --foreground: 0.95 0 0;
+    --card: 0.13 0 0;
+    --card-foreground: 0.95 0 0;
+    --popover: 0.13 0 0;
+    --popover-foreground: 0.95 0 0;
+    --primary: 0.56 0.28 330;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.2 0 0;
+    --secondary-foreground: 0.9 0 0;
+    --muted: 0.18 0 0;
+    --muted-foreground: 0.6 0 0;
+    --accent: 0.52 0.27 285;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 1 0 0;
+    --border: 0.22 0 0;
+    --input: 0.22 0 0;
+    --ring: 0.56 0.28 330;
+    --chart-1: 0.56 0.28 330;
+    --chart-2: 0.52 0.27 285;
+    --chart-3: 0.65 0.22 200;
+    --chart-4: 0.7 0.2 50;
+    --chart-5: 0.6 0.24 25;
+  }
 
-    * {
-        @apply border-border;
-    }
-    
-    body {
-        @apply bg-background text-foreground;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    }
+  * {
+    @apply border-border;
+  }
 
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-    }
+  html,
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 }
 
 @layer utilities {
-    .text-balance {
-        text-wrap: balance;
-    }
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      oklch(0.56 0.28 330),
+      oklch(0.52 0.27 285)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(
+      135deg,
+      oklch(0.56 0.28 330),
+      oklch(0.52 0.27 285)
+    );
+  }
+
+  .story-ring {
+    background: linear-gradient(
+      135deg,
+      oklch(0.7 0.25 50),
+      oklch(0.56 0.28 330),
+      oklch(0.52 0.27 285)
+    );
+    padding: 2px;
+    border-radius: 9999px;
+  }
+
+  .story-ring-inner {
+    background: oklch(0.08 0 0);
+    border-radius: 9999px;
+    padding: 2px;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

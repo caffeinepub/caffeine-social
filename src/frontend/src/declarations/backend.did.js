@@ -60,6 +60,8 @@ export const UserProfile = IDL.Record({
   'username' : IDL.Text,
   'subscription' : IDL.Bool,
   'email' : IDL.Text,
+  'followers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  'following' : IDL.Opt(IDL.Vec(IDL.Principal)),
 });
 export const Notification = IDL.Record({
   'id' : IDL.Nat,
@@ -76,6 +78,10 @@ export const StripeSessionStatus = IDL.Variant({
     'response' : IDL.Text,
   }),
   'failed' : IDL.Record({ 'error' : IDL.Text }),
+});
+export const User = IDL.Record({
+  'followers' : IDL.Vec(IDL.Principal),
+  'following' : IDL.Vec(IDL.Principal),
 });
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
@@ -134,6 +140,7 @@ export const idlService = IDL.Service({
       [IDL.Bool],
       [],
     ),
+  'amIFollowedBy' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createCheckoutSession' : IDL.Func(
       [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
@@ -142,19 +149,39 @@ export const idlService = IDL.Service({
     ),
   'createPost' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [PostView], []),
   'createStory' : IDL.Func([IDL.Opt(ExternalBlob), IDL.Nat], [StoryView], []),
+  'createUser' : IDL.Func([], [], []),
+  'followUser' : IDL.Func([IDL.Principal], [], []),
   'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
   'getFeed' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
+  'getFollowers' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(IDL.Principal)],
+      ['query'],
+    ),
+  'getFollowing' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(IDL.Principal)],
+      ['query'],
+    ),
   'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+  'getUserData' : IDL.Func([IDL.Principal], [IDL.Opt(User)], ['query']),
+  'getUserPosts' : IDL.Func([IDL.Principal], [IDL.Vec(PostView)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getUserStats' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Record({ 'followers' : IDL.Nat, 'following' : IDL.Nat })],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isFollowing' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
   'likePost' : IDL.Func([IDL.Nat], [], []),
   'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
@@ -166,6 +193,7 @@ export const idlService = IDL.Service({
       [TransformationOutput],
       ['query'],
     ),
+  'unfollowUser' : IDL.Func([IDL.Principal], [], []),
   'viewStory' : IDL.Func([IDL.Nat], [StoryView], []),
 });
 
@@ -224,6 +252,8 @@ export const idlFactory = ({ IDL }) => {
     'username' : IDL.Text,
     'subscription' : IDL.Bool,
     'email' : IDL.Text,
+    'followers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+    'following' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
   const Notification = IDL.Record({
     'id' : IDL.Nat,
@@ -240,6 +270,10 @@ export const idlFactory = ({ IDL }) => {
       'response' : IDL.Text,
     }),
     'failed' : IDL.Record({ 'error' : IDL.Text }),
+  });
+  const User = IDL.Record({
+    'followers' : IDL.Vec(IDL.Principal),
+    'following' : IDL.Vec(IDL.Principal),
   });
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
@@ -295,6 +329,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'amIFollowedBy' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createCheckoutSession' : IDL.Func(
         [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
@@ -303,19 +338,39 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createPost' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [PostView], []),
     'createStory' : IDL.Func([IDL.Opt(ExternalBlob), IDL.Nat], [StoryView], []),
+    'createUser' : IDL.Func([], [], []),
+    'followUser' : IDL.Func([IDL.Principal], [], []),
     'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
     'getFeed' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
+    'getFollowers' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
+    'getFollowing' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
     'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+    'getUserData' : IDL.Func([IDL.Principal], [IDL.Opt(User)], ['query']),
+    'getUserPosts' : IDL.Func([IDL.Principal], [IDL.Vec(PostView)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getUserStats' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Record({ 'followers' : IDL.Nat, 'following' : IDL.Nat })],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isFollowing' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
     'likePost' : IDL.Func([IDL.Nat], [], []),
     'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
@@ -327,6 +382,7 @@ export const idlFactory = ({ IDL }) => {
         [TransformationOutput],
         ['query'],
       ),
+    'unfollowUser' : IDL.Func([IDL.Principal], [], []),
     'viewStory' : IDL.Func([IDL.Nat], [StoryView], []),
   });
 };

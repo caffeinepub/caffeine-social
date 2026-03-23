@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActor } from "./useActor";
 
 export function useViewStory() {
   const { actor } = useActor();
@@ -7,11 +7,11 @@ export function useViewStory() {
 
   return useMutation({
     mutationFn: async (storyId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.viewStory(storyId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['activeStories'] });
+      queryClient.invalidateQueries({ queryKey: ["activeStories"] });
     },
   });
 }

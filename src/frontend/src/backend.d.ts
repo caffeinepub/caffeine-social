@@ -27,6 +27,10 @@ export interface Comment {
     author: Principal;
     postId: bigint;
 }
+export interface User {
+    followers: Array<Principal>;
+    following: Array<Principal>;
+}
 export interface PostView {
     id: bigint;
     media?: ExternalBlob;
@@ -92,6 +96,8 @@ export interface UserProfile {
     username: string;
     subscription: boolean;
     email: string;
+    followers?: Array<Principal>;
+    following?: Array<Principal>;
 }
 export enum UserRole {
     admin = "admin",
@@ -101,19 +107,31 @@ export enum UserRole {
 export interface backendInterface {
     addComment(postId: bigint, content: string): Promise<Comment>;
     addCommentBackend(postId: bigint, text: string, author: Principal): Promise<boolean>;
+    amIFollowedBy(follower: Principal): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createPost(content: string, media: ExternalBlob | null): Promise<PostView>;
     createStory(media: ExternalBlob | null, expirationHours: bigint): Promise<StoryView>;
+    createUser(): Promise<void>;
+    followUser(followee: Principal): Promise<void>;
     getActiveStories(): Promise<Array<StoryView>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getComments(postId: bigint): Promise<Array<Comment>>;
     getFeed(): Promise<Array<PostView>>;
+    getFollowers(user: Principal): Promise<Array<Principal>>;
+    getFollowing(user: Principal): Promise<Array<Principal>>;
     getNotifications(): Promise<Array<Notification>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
+    getUserData(user: Principal): Promise<User | null>;
+    getUserPosts(user: Principal): Promise<Array<PostView>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserStats(user: Principal): Promise<{
+        followers: bigint;
+        following: bigint;
+    }>;
     isCallerAdmin(): Promise<boolean>;
+    isFollowing(followee: Principal): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
     likePost(postId: bigint): Promise<void>;
     markNotificationAsRead(notificationId: bigint): Promise<void>;
@@ -121,5 +139,6 @@ export interface backendInterface {
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     subscribeUser(): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
+    unfollowUser(followee: Principal): Promise<void>;
     viewStory(storyId: bigint): Promise<StoryView>;
 }

@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { ExternalBlob } from '../backend';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ExternalBlob } from "../backend";
+import { useActor } from "./useActor";
 
 export function useCreateStory() {
   const { actor } = useActor();
@@ -14,11 +14,11 @@ export function useCreateStory() {
       media: ExternalBlob | null;
       expirationHours: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.createStory(media, expirationHours);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['activeStories'] });
+      queryClient.invalidateQueries({ queryKey: ["activeStories"] });
     },
   });
 }

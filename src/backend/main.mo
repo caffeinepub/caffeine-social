@@ -2,8 +2,8 @@ import Array "mo:core/Array";
 import Time "mo:core/Time";
 import List "mo:core/List";
 import Set "mo:core/Set";
-import Iter "mo:core/Iter";
 import Map "mo:core/Map";
+import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Text "mo:core/Text";
 import Principal "mo:core/Principal";
@@ -14,6 +14,8 @@ import Stripe "stripe/stripe";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Runtime "mo:core/Runtime";
+
+
 
 actor {
   include MixinStorage();
@@ -118,9 +120,15 @@ actor {
     views : Set.Set<Principal>;
   };
 
+  // User persistent data
+  type User = {
+    followers : [Principal];
+    following : [Principal];
+  };
+
   // Initialize persistent data stores
   module PersistentStore {
-    public func init<K, V>() : (Map.Map<K, V>) {
+    public func init<K, V>() : Map.Map<K, V> {
       Map.empty<K, V>();
     };
   };
@@ -145,9 +153,12 @@ actor {
     username : Text;
     email : Text;
     subscription : Bool;
+    followers : ?[Principal];
+    following : ?[Principal];
   };
 
   let userProfiles = PersistentStore.init<Principal, UserProfile>();
+  let users = PersistentStore.init<Principal, User>();
 
   // User Profile Functions (required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -158,9 +169,8 @@ actor {
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
+    // Authorization: Users can view any profile (public data)
+    // No restriction needed - profiles are public information
     userProfiles.get(user);
   };
 
@@ -219,6 +229,7 @@ actor {
   };
 
   public query ({ caller }) func getFeed() : async [PostView] {
+    // Authorization: Feed is public - any user including guests can view
     posts.values().toArray().map(
       func(post) {
         {
@@ -318,8 +329,7 @@ actor {
   };
 
   public query ({ caller }) func getComments(postId : Nat) : async [Comment] {
-    // No authorization check - comments are public like the feed
-    // This maintains consistency with getFeed which also has no auth check
+    // Authorization: Comments are public - any user including guests can view
     switch (posts.get(postId)) {
       case (null) { Runtime.trap("Post not found") };
       case (?post) {
@@ -459,5 +469,165 @@ actor {
         await Stripe.createCheckoutSession(config, caller, items, successUrl, cancelUrl, transform);
       };
     };
+  };
+
+  // Social Features
+  public query ({ caller }) func getUserData(user : Principal) : async ?User {
+    // Authorization: User data (followers/following) is public information
+    users.get(user);
+  };
+
+  public shared ({ caller }) func createUser() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create user data");
+    };
+
+    if (users.containsKey(caller)) {
+      Runtime.trap("User already exists");
+    };
+
+    let user : User = {
+      followers = [];
+      following = [];
+    };
+
+    users.add(caller, user);
+  };
+
+  public shared ({ caller }) func followUser(followee : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can follow others");
+    };
+
+    if (caller == followee) {
+      Runtime.trap("Cannot follow yourself");
+    };
+
+    let user = switch (users.get(caller)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?u) { u };
+    };
+
+    // Use array iter find to check for existence
+    switch (user.following.values().find(func(f) { f == followee })) {
+      case (?_) { Runtime.trap("Already following user") };
+      case (null) {};
+    };
+
+    let updatedFollowing = user.following.concat([followee]);
+    users.add(caller, { user with following = updatedFollowing });
+
+    let followeeUser = switch (users.get(followee)) {
+      case (null) { Runtime.trap("Followee not found") };
+      case (?u) { u };
+    };
+
+    // Use array iter find to check for existence
+    switch (followeeUser.followers.values().find(func(f) { f == caller })) {
+      case (?_) { Runtime.trap("Already a follower") };
+      case (null) {};
+    };
+
+    let updatedFollowers = followeeUser.followers.concat([caller]);
+    users.add(followee, { followeeUser with followers = updatedFollowers });
+  };
+
+  public shared ({ caller }) func unfollowUser(followee : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can unfollow others");
+    };
+
+    let user = switch (users.get(caller)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?u) { u };
+    };
+
+    // Use array iter find to check for existence
+    switch (user.following.values().find(func(f) { f == followee })) {
+      case (null) { Runtime.trap("Not following user") };
+      case (?_) {};
+    };
+
+    let filteredFollowing = user.following.filter(func(f) { f != followee });
+    users.add(caller, { user with following = filteredFollowing });
+
+    switch (users.get(followee)) {
+      case (null) { Runtime.trap("Followee not found") };
+      case (?followeeUser) {
+        if (followeeUser.followers.values().find(func(f) { f == caller }) != null) {
+          let filteredFollowers = followeeUser.followers.filter(func(f) { f != caller });
+          users.add(followee, { followeeUser with followers = filteredFollowers });
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func isFollowing(followee : Principal) : async Bool {
+    // Authorization: Public query - anyone can check follow relationships
+    if (caller == followee) { return false };
+
+    switch (users.get(caller)) {
+      case (null) { false };
+      case (?user) {
+        switch (user.following.values().find(func(f) { f == followee })) {
+          case (null) { false };
+          case (?_) { true };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func amIFollowedBy(follower : Principal) : async Bool {
+    // Authorization: Public query - anyone can check follow relationships
+    switch (users.get(caller)) {
+      case (null) { false };
+      case (?user) {
+        switch (user.followers.values().find(func(f) { f == follower })) {
+          case (null) { false };
+          case (?_) { true };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func getFollowers(user : Principal) : async [Principal] {
+    // Authorization: Follower lists are public information
+    switch (users.get(user)) {
+      case (null) { [] };
+      case (?u) { u.followers };
+    };
+  };
+
+  public query ({ caller }) func getFollowing(user : Principal) : async [Principal] {
+    // Authorization: Following lists are public information
+    switch (users.get(user)) {
+      case (null) { [] };
+      case (?u) { u.following };
+    };
+  };
+
+  public query ({ caller }) func getUserStats(user : Principal) : async {
+    followers : Nat;
+    following : Nat;
+  } {
+    // Authorization: User stats are public information
+    switch (users.get(user)) {
+      case (null) { { followers = 0; following = 0 } };
+      case (?u) { { followers = u.followers.size(); following = u.following.size() } };
+    };
+  };
+
+  public query ({ caller }) func getUserPosts(user : Principal) : async [PostView] {
+    // Authorization: User posts are public - any user including guests can view
+    let filtered = posts.values().toArray().filter(func(p) { p.author == user });
+    filtered.map(
+      func(post) {
+        {
+          post with
+          likes = post.likes.toArray();
+          comments = post.comments.toArray();
+        };
+      }
+    );
   };
 };
