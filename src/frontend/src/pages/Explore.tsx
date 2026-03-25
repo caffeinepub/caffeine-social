@@ -7,6 +7,17 @@ import { useGetFeed } from "../hooks/useGetFeed";
 const FILTER_TABS = ["All", "Photos", "Videos", "People"] as const;
 type FilterTab = (typeof FILTER_TABS)[number];
 
+const TRENDING_HASHTAGS = [
+  "#photography",
+  "#reels",
+  "#art",
+  "#travel",
+  "#food",
+  "#fitness",
+  "#music",
+  "#memes",
+];
+
 const GRADIENT_PLACEHOLDERS = [
   "from-violet-900 to-pink-700",
   "from-blue-900 to-cyan-600",
@@ -22,11 +33,14 @@ const GRADIENT_PLACEHOLDERS = [
 export default function Explore() {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
+  const [activeHashtag, setActiveHashtag] = useState<string | null>(null);
   const { data: posts = [], isLoading } = useGetFeed();
 
   const filtered = posts.filter((p) => {
+    const searchStr = query || (activeHashtag ?? "");
     const matchesQuery =
-      query === "" || p.content.toLowerCase().includes(query.toLowerCase());
+      searchStr === "" ||
+      p.content.toLowerCase().includes(searchStr.toLowerCase());
     const matchesTab =
       activeTab === "All" ||
       (activeTab === "Photos" && !!p.media) ||
@@ -35,7 +49,17 @@ export default function Explore() {
     return matchesQuery && matchesTab;
   });
 
-  const displayPosts = filtered.length > 0 ? filtered : SAMPLE_EXPLORE_POSTS;
+  const displayPosts =
+    filtered.length > 0
+      ? filtered
+      : posts.length === 0
+        ? SAMPLE_EXPLORE_POSTS
+        : [];
+
+  const handleHashtag = (tag: string) => {
+    setActiveHashtag(activeHashtag === tag ? null : tag);
+    setQuery("");
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-3 py-4">
@@ -46,10 +70,37 @@ export default function Explore() {
           type="text"
           placeholder="Search posts, people..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActiveHashtag(null);
+          }}
           className="w-full bg-secondary border border-border rounded-full pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
           data-ocid="explore.search_input"
         />
+      </div>
+
+      {/* Trending hashtags */}
+      <div className="mb-4">
+        <p className="text-xs text-muted-foreground font-medium mb-2">
+          Trending
+        </p>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none">
+          {TRENDING_HASHTAGS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleHashtag(tag)}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                activeHashtag === tag
+                  ? "gradient-bg text-white border-transparent"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-primary"
+              }`}
+              data-ocid="explore.tab"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filter tabs */}
@@ -84,7 +135,7 @@ export default function Explore() {
             <Skeleton key={k} className="aspect-square" />
           ))}
         </div>
-      ) : filtered.length === 0 && posts.length > 0 ? (
+      ) : displayPosts.length === 0 ? (
         <div className="text-center py-20" data-ocid="explore.empty_state">
           <p className="text-lg font-semibold mb-1">No results</p>
           <p className="text-sm text-muted-foreground">

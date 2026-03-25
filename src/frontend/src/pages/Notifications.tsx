@@ -9,12 +9,14 @@ import { useMarkNotificationAsRead } from "../hooks/useMarkNotificationAsRead";
 
 function getNotifIcon(type: string) {
   if (type.includes("like") || type.includes("Like"))
-    return <Heart className="w-4 h-4 text-red-400" />;
+    return <Heart className="w-3 h-3 text-red-400" />;
   if (type.includes("comment") || type.includes("Comment"))
-    return <MessageCircle className="w-4 h-4 text-blue-400" />;
+    return <MessageCircle className="w-3 h-3 text-blue-400" />;
   if (type.includes("follow") || type.includes("Follow"))
-    return <UserPlus className="w-4 h-4 text-green-400" />;
-  return <Bell className="w-4 h-4 text-primary" />;
+    return <UserPlus className="w-3 h-3 text-green-400" />;
+  if (type.includes("message") || type.includes("Message"))
+    return <MessageCircle className="w-3 h-3 text-primary" />;
+  return <Bell className="w-3 h-3 text-primary" />;
 }
 
 function getNotifText(type: string) {
@@ -23,7 +25,18 @@ function getNotifText(type: string) {
     return "commented on your post";
   if (type.includes("follow") || type.includes("Follow"))
     return "started following you";
+  if (type.includes("message") || type.includes("Message"))
+    return "sent you a message";
   return type;
+}
+
+function timeGroup(ns: bigint): "Today" | "This Week" | "Earlier" {
+  const ms = Number(ns) / 1_000_000;
+  const now = Date.now();
+  const diff = now - ms;
+  if (diff < 86_400_000) return "Today";
+  if (diff < 7 * 86_400_000) return "This Week";
+  return "Earlier";
 }
 
 export default function Notifications() {
@@ -51,6 +64,15 @@ export default function Notifications() {
       markRead(n.id);
     }
   };
+
+  // Group notifications
+  const grouped: Record<string, typeof notifications> = {};
+  for (const n of notifications) {
+    const group = timeGroup(n.createdAt);
+    if (!grouped[group]) grouped[group] = [];
+    grouped[group].push(n);
+  }
+  const groupOrder = ["Today", "This Week", "Earlier"] as const;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -132,45 +154,66 @@ export default function Notifications() {
           </div>
         </>
       ) : (
-        <div className="divide-y divide-border" data-ocid="notifications.list">
-          {notifications.map((notif, idx) => (
-            <button
-              key={notif.id.toString()}
-              type="button"
-              onClick={() => !notif.read && markRead(notif.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left ${
-                !notif.read ? "bg-primary/5" : ""
-              }`}
-              data-ocid={`notifications.item.${idx + 1}`}
-            >
-              <div className="relative">
-                <Avatar className="w-11 h-11">
-                  <AvatarFallback className="gradient-bg text-white text-sm font-bold">
-                    {notif.senderId.toString().slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
-                  {getNotifIcon(notif._type)}
+        <div data-ocid="notifications.list">
+          {groupOrder.map((group) => {
+            const items = grouped[group];
+            if (!items || items.length === 0) return null;
+            return (
+              <div key={group}>
+                <div className="px-4 py-2 bg-muted/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {group}
+                  </p>
+                </div>
+                <div className="divide-y divide-border">
+                  {items.map((notif, idx) => (
+                    <button
+                      key={notif.id.toString()}
+                      type="button"
+                      onClick={() => !notif.read && markRead(notif.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left ${
+                        !notif.read ? "bg-primary/5" : ""
+                      }`}
+                      data-ocid={`notifications.item.${idx + 1}`}
+                    >
+                      <div className="relative">
+                        <Avatar className="w-11 h-11">
+                          <AvatarFallback className="gradient-bg text-white text-sm font-bold">
+                            {notif.senderId
+                              .toString()
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
+                          {getNotifIcon(notif._type)}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">
+                          <span className="font-semibold">
+                            {notif.senderId.toString().slice(0, 8)}...
+                          </span>{" "}
+                          {getNotifText(notif._type)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatDistanceToNow(
+                            Number(notif.createdAt) / 1_000_000,
+                            {
+                              addSuffix: true,
+                            },
+                          )}
+                        </p>
+                      </div>
+                      {!notif.read && (
+                        <div className="w-2.5 h-2.5 gradient-bg rounded-full flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm">
-                  <span className="font-semibold">
-                    {notif.senderId.toString().slice(0, 8)}...
-                  </span>{" "}
-                  {getNotifText(notif._type)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatDistanceToNow(Number(notif.createdAt) / 1_000_000, {
-                    addSuffix: true,
-                  })}
-                </p>
-              </div>
-              {!notif.read && (
-                <div className="w-2.5 h-2.5 gradient-bg rounded-full flex-shrink-0" />
-              )}
-            </button>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

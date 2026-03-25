@@ -57,11 +57,21 @@ export const StoryView = IDL.Record({
   'author' : IDL.Principal,
 });
 export const UserProfile = IDL.Record({
+  'bio' : IDL.Opt(IDL.Text),
   'username' : IDL.Text,
   'subscription' : IDL.Bool,
   'email' : IDL.Text,
+  'website' : IDL.Opt(IDL.Text),
   'followers' : IDL.Opt(IDL.Vec(IDL.Principal)),
   'following' : IDL.Opt(IDL.Vec(IDL.Principal)),
+});
+export const Message = IDL.Record({
+  'id' : IDL.Nat,
+  'content' : IDL.Text,
+  'createdAt' : Time,
+  'read' : IDL.Bool,
+  'recipient' : IDL.Principal,
+  'sender' : IDL.Principal,
 });
 export const Notification = IDL.Record({
   'id' : IDL.Nat,
@@ -78,10 +88,6 @@ export const StripeSessionStatus = IDL.Variant({
     'response' : IDL.Text,
   }),
   'failed' : IDL.Record({ 'error' : IDL.Text }),
-});
-export const User = IDL.Record({
-  'followers' : IDL.Vec(IDL.Principal),
-  'following' : IDL.Vec(IDL.Principal),
 });
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
@@ -155,6 +161,7 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
+  'getConversations' : IDL.Func([], [IDL.Vec(IDL.Principal)], []),
   'getFeed' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
   'getFollowers' : IDL.Func(
       [IDL.Principal],
@@ -166,9 +173,10 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Principal)],
       ['query'],
     ),
+  'getMessages' : IDL.Func([IDL.Principal], [IDL.Vec(Message)], []),
   'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
+  'getSavedPosts' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
-  'getUserData' : IDL.Func([IDL.Principal], [IDL.Opt(User)], ['query']),
   'getUserPosts' : IDL.Func([IDL.Principal], [IDL.Vec(PostView)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -186,6 +194,8 @@ export const idlService = IDL.Service({
   'likePost' : IDL.Func([IDL.Nat], [], []),
   'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'savePost' : IDL.Func([IDL.Nat], [], []),
+  'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [Message], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'subscribeUser' : IDL.Func([], [], []),
   'transform' : IDL.Func(
@@ -194,6 +204,7 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'unfollowUser' : IDL.Func([IDL.Principal], [], []),
+  'unsavePost' : IDL.Func([IDL.Nat], [], []),
   'viewStory' : IDL.Func([IDL.Nat], [StoryView], []),
 });
 
@@ -249,11 +260,21 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Principal,
   });
   const UserProfile = IDL.Record({
+    'bio' : IDL.Opt(IDL.Text),
     'username' : IDL.Text,
     'subscription' : IDL.Bool,
     'email' : IDL.Text,
+    'website' : IDL.Opt(IDL.Text),
     'followers' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'following' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  });
+  const Message = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : IDL.Text,
+    'createdAt' : Time,
+    'read' : IDL.Bool,
+    'recipient' : IDL.Principal,
+    'sender' : IDL.Principal,
   });
   const Notification = IDL.Record({
     'id' : IDL.Nat,
@@ -270,10 +291,6 @@ export const idlFactory = ({ IDL }) => {
       'response' : IDL.Text,
     }),
     'failed' : IDL.Record({ 'error' : IDL.Text }),
-  });
-  const User = IDL.Record({
-    'followers' : IDL.Vec(IDL.Principal),
-    'following' : IDL.Vec(IDL.Principal),
   });
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
@@ -344,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
+    'getConversations' : IDL.Func([], [IDL.Vec(IDL.Principal)], []),
     'getFeed' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
     'getFollowers' : IDL.Func(
         [IDL.Principal],
@@ -355,9 +373,10 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Principal)],
         ['query'],
       ),
+    'getMessages' : IDL.Func([IDL.Principal], [IDL.Vec(Message)], []),
     'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
+    'getSavedPosts' : IDL.Func([], [IDL.Vec(PostView)], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
-    'getUserData' : IDL.Func([IDL.Principal], [IDL.Opt(User)], ['query']),
     'getUserPosts' : IDL.Func([IDL.Principal], [IDL.Vec(PostView)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -375,6 +394,8 @@ export const idlFactory = ({ IDL }) => {
     'likePost' : IDL.Func([IDL.Nat], [], []),
     'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'savePost' : IDL.Func([IDL.Nat], [], []),
+    'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [Message], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'subscribeUser' : IDL.Func([], [], []),
     'transform' : IDL.Func(
@@ -383,6 +404,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'unfollowUser' : IDL.Func([IDL.Principal], [], []),
+    'unsavePost' : IDL.Func([IDL.Nat], [], []),
     'viewStory' : IDL.Func([IDL.Nat], [StoryView], []),
   });
 };

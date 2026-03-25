@@ -27,10 +27,6 @@ export interface Comment {
     author: Principal;
     postId: bigint;
 }
-export interface User {
-    followers: Array<Principal>;
-    following: Array<Principal>;
-}
 export interface PostView {
     id: bigint;
     media?: ExternalBlob;
@@ -76,6 +72,14 @@ export interface Notification {
     recipientId: Principal;
     senderId: Principal;
 }
+export interface Message {
+    id: bigint;
+    content: string;
+    createdAt: Time;
+    read: boolean;
+    recipient: Principal;
+    sender: Principal;
+}
 export type StripeSessionStatus = {
     __kind__: "completed";
     completed: {
@@ -93,9 +97,11 @@ export interface StripeConfiguration {
     secretKey: string;
 }
 export interface UserProfile {
+    bio?: string;
     username: string;
     subscription: boolean;
     email: string;
+    website?: string;
     followers?: Array<Principal>;
     following?: Array<Principal>;
 }
@@ -118,12 +124,14 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getComments(postId: bigint): Promise<Array<Comment>>;
+    getConversations(): Promise<Array<Principal>>;
     getFeed(): Promise<Array<PostView>>;
     getFollowers(user: Principal): Promise<Array<Principal>>;
     getFollowing(user: Principal): Promise<Array<Principal>>;
+    getMessages(otherUser: Principal): Promise<Array<Message>>;
     getNotifications(): Promise<Array<Notification>>;
+    getSavedPosts(): Promise<Array<PostView>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
-    getUserData(user: Principal): Promise<User | null>;
     getUserPosts(user: Principal): Promise<Array<PostView>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserStats(user: Principal): Promise<{
@@ -136,9 +144,12 @@ export interface backendInterface {
     likePost(postId: bigint): Promise<void>;
     markNotificationAsRead(notificationId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    savePost(postId: bigint): Promise<void>;
+    sendMessage(recipientId: Principal, content: string): Promise<Message>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     subscribeUser(): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unfollowUser(followee: Principal): Promise<void>;
+    unsavePost(postId: bigint): Promise<void>;
     viewStory(storyId: bigint): Promise<StoryView>;
 }

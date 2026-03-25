@@ -16,6 +16,7 @@ import PaymentFailure from "./pages/PaymentFailure";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Profile from "./pages/Profile";
 import Reels from "./pages/Reels";
+import Settings from "./pages/Settings";
 import Stories from "./pages/Stories";
 import Subscribe from "./pages/Subscribe";
 
@@ -67,6 +68,11 @@ const messagesRoute = createRoute({
   path: "/messages",
   component: Messages,
 });
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings",
+  component: Settings,
+});
 const paymentSuccessRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/payment-success",
@@ -87,6 +93,7 @@ const routeTree = rootRoute.addChildren([
   exploreRoute,
   notificationsRoute,
   messagesRoute,
+  settingsRoute,
   paymentSuccessRoute,
   paymentFailureRoute,
 ]);

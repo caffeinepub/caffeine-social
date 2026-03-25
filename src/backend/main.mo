@@ -1,22 +1,23 @@
-import Array "mo:core/Array";
-import Time "mo:core/Time";
+import Map "mo:core/Map";
 import List "mo:core/List";
 import Set "mo:core/Set";
-import Map "mo:core/Map";
+import Array "mo:core/Array";
 import Iter "mo:core/Iter";
-import Order "mo:core/Order";
+import Time "mo:core/Time";
 import Text "mo:core/Text";
 import Principal "mo:core/Principal";
+import OutCall "http-outcalls/outcall";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
-import OutCall "http-outcalls/outcall";
 import Stripe "stripe/stripe";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Migration "migration";
+import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 
-
-
+// Specify the data migration function in with-clause
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -24,10 +25,26 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // Stripe configuration
-  var stripeConfig : ?Stripe.StripeConfiguration = null;
-
   // Data Models & Views
+  public type Message = {
+    id : Nat;
+    sender : Principal;
+    recipient : Principal;
+    content : Text;
+    createdAt : Time.Time;
+    read : Bool;
+  };
+
+  module Message {
+    public func compareByCreatedAt(a : Message, b : Message) : Order.Order {
+      if (a.createdAt > b.createdAt) {
+        #less;
+      } else if (a.createdAt < b.createdAt) {
+        #greater;
+      } else { #equal };
+    };
+  };
+
   public type Comment = {
     id : Nat;
     postId : Nat;
@@ -90,15 +107,14 @@ actor {
     views : [Principal];
   };
 
-  var nextPostId = 1;
-  var nextCommentId = 1;
-  var nextStoryId = 1;
-  var nextNotificationId = 1;
-
-  // Data Stores
+  // Persistent data stores (persistence logic provided by CanDB)
+  let users = Map.empty<Principal, User>();
+  let userProfiles = Map.empty<Principal, UserProfile>();
   let posts = Map.empty<Nat, Post>();
   let stories = Map.empty<Nat, Story>();
   let notifications = Map.empty<Nat, Notification>();
+  let messages = Map.empty<Nat, Message>();
+  let savedPosts = Map.empty<Principal, Set.Set<Nat>>();
 
   // Post persistent data
   type Post = {
@@ -120,17 +136,31 @@ actor {
     views : Set.Set<Principal>;
   };
 
-  // User persistent data
+  // User data (followers/following)
   type User = {
     followers : [Principal];
     following : [Principal];
   };
 
-  // Initialize persistent data stores
-  module PersistentStore {
-    public func init<K, V>() : Map.Map<K, V> {
-      Map.empty<K, V>();
-    };
+  // Identity and counters
+  var nextPostId = 1;
+  var nextCommentId = 1;
+  var nextStoryId = 1;
+  var nextNotificationId = 1;
+  var nextMessageId = 1;
+
+  // Stripe configuration (persistent actor field)
+  var stripeConfig : ?Stripe.StripeConfiguration = null;
+
+  // User Profile Type (required by frontend)
+  public type UserProfile = {
+    username : Text;
+    email : Text;
+    subscription : Bool;
+    followers : ?[Principal];
+    following : ?[Principal];
+    bio : ?Text;
+    website : ?Text;
   };
 
   // Helper function to create notifications
@@ -148,18 +178,6 @@ actor {
     nextNotificationId += 1;
   };
 
-  // User Profile Type (required by frontend)
-  public type UserProfile = {
-    username : Text;
-    email : Text;
-    subscription : Bool;
-    followers : ?[Principal];
-    following : ?[Principal];
-  };
-
-  let userProfiles = PersistentStore.init<Principal, UserProfile>();
-  let users = PersistentStore.init<Principal, User>();
-
   // User Profile Functions (required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -169,8 +187,7 @@ actor {
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    // Authorization: Users can view any profile (public data)
-    // No restriction needed - profiles are public information
+    // Authorization: User profiles are public information - any user including guests can view
     userProfiles.get(user);
   };
 
@@ -181,6 +198,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
+  // Post & Feed Functions
   public shared ({ caller }) func createPost(content : Text, media : ?Storage.ExternalBlob) : async PostView {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create posts");
@@ -241,132 +259,157 @@ actor {
     ).sort(PostView.compareByCreatedAt);
   };
 
-  // Subscription Functions
-  public shared ({ caller }) func subscribeUser() : async () {
+  // Save/Unsave Post Functions
+  public shared ({ caller }) func savePost(postId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can subscribe");
+      Runtime.trap("Unauthorized: Only users can save posts");
     };
 
-    let profile = switch (userProfiles.get(caller)) {
-      case (null) { Runtime.trap("User profile not found") };
-      case (?p) { p };
+    // Check if the post exists before saving
+    if (not posts.containsKey(postId)) { Runtime.trap("Post not found") };
+
+    let userSavedPosts = switch (savedPosts.get(caller)) {
+      case (null) { Set.empty<Nat>() };
+      case (?existing) { existing };
     };
 
-    let updatedProfile = { profile with subscription = true };
-    userProfiles.add(caller, updatedProfile);
+    // Verify the post is not already saved
+    if (userSavedPosts.contains(postId)) { Runtime.trap("Post already saved") };
+
+    userSavedPosts.add(postId);
+    savedPosts.add(caller, userSavedPosts);
   };
 
-  // Comment Functions
-  public shared ({ caller }) func addComment(postId : Nat, content : Text) : async Comment {
+  public shared ({ caller }) func unsavePost(postId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can add comments");
+      Runtime.trap("Unauthorized: Only users can unsave posts");
     };
 
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
+    let userSavedPosts = switch (savedPosts.get(caller)) {
+      case (null) { Runtime.trap("No saved posts found") };
+      case (?existing) { existing };
     };
 
-    let comment : Comment = {
-      id = nextCommentId;
-      postId;
-      author = caller;
+    if (not userSavedPosts.contains(postId)) { Runtime.trap("Post not saved") };
+
+    userSavedPosts.remove(postId);
+    savedPosts.add(caller, userSavedPosts);
+  };
+
+  public query ({ caller }) func getSavedPosts() : async [PostView] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can retrieve saved posts");
+    };
+
+    switch (savedPosts.get(caller)) {
+      case (null) { [] };
+      case (?saved) {
+        let sortedPostIds = saved.toArray().sort();
+
+        // Keep post type consistent for array pattern matching
+        let allPosts = posts.toArray().map(func((id, post)) { post });
+
+        // Use post ID for array access
+        sortedPostIds.filter(
+          func(postId) {
+            switch (posts.get(postId)) {
+              case (null) { false };
+              case (?post) { true };
+            };
+          }
+        ).map(
+          func(postId) {
+            switch (posts.get(postId)) {
+              case (null) {
+                {
+                  id = postId;
+                  author = caller;
+                  content = "Post not found";
+                  media = null;
+                  likes = [];
+                  comments = [];
+                  createdAt = 0;
+                };
+              };
+              case (?post) {
+                {
+                  post with
+                  likes = post.likes.toArray();
+                  comments = post.comments.toArray();
+                };
+              };
+            };
+          }
+        );
+      };
+    };
+  };
+
+  // Direct Messaging Functions
+  public shared ({ caller }) func sendMessage(recipientId : Principal, content : Text) : async Message {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can send messages");
+    };
+
+    let isRecipientUser = AccessControl.hasPermission(accessControlState, recipientId, #user);
+
+    if (not isRecipientUser) {
+      Runtime.trap("Recipient not found or not a user");
+    };
+
+    let message : Message = {
+      id = nextMessageId;
+      sender = caller;
+      recipient = recipientId;
       content;
       createdAt = Time.now();
+      read = false;
     };
 
-    // Add comment to post's comments list
-    post.comments.add(comment);
+    messages.add(nextMessageId, message);
+    nextMessageId += 1;
 
-    // Update post in the posts map
-    posts.add(postId, post);
-
-    nextCommentId += 1;
-
-    // Create notification for post author (if not commenting on own post)
-    if (post.author != caller) {
-      createNotification(post.author, "comment", postId, caller);
-    };
-
-    comment;
+    createNotification(recipientId, "message", message.id, caller);
+    message;
   };
 
-  public shared ({ caller }) func addCommentBackend(postId : Nat, text : Text, author : Principal) : async Bool {
-    // Authorization check: Only users can add comments
+  public shared ({ caller }) func getMessages(otherUser : Principal) : async [Message] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can add comments");
+      Runtime.trap("Unauthorized: Only users can retrieve messages");
     };
 
-    // Verify that the caller is the author they claim to be
-    // This prevents impersonation attacks
-    if (caller != author) {
-      Runtime.trap("Unauthorized: Cannot create comments on behalf of other users");
-    };
-
-    let comment : Comment = {
-      id = nextCommentId;
-      postId;
-      author;
-      content = text;
-      createdAt = Time.now();
-    };
-
-    switch (posts.get(postId)) {
-      case (?post) {
-        post.comments.add(comment);
-        posts.add(postId, post);
-        nextCommentId += 1;
-
-        // Create notification for post author (if not commenting on own post)
-        if (post.author != caller) {
-          createNotification(post.author, "comment", postId, caller);
-        };
-
-        true;
-      };
-      case (null) { false };
-    };
-  };
-
-  public query ({ caller }) func getComments(postId : Nat) : async [Comment] {
-    // Authorization: Comments are public - any user including guests can view
-    switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?post) {
-        let comments = post.comments.toArray();
-        comments.sort(Comment.compareByCreatedAt);
-      };
-    };
-  };
-
-  // Notification Functions
-  public query ({ caller }) func getNotifications() : async [Notification] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view notifications");
-    };
-
-    let filtered = notifications.values().toArray().filter(
-      func(n) { n.recipientId == caller }
+    let filteredMessages = messages.values().toArray().filter(
+      func(message) {
+        (message.sender == caller and message.recipient == otherUser) or (message.sender == otherUser and message.recipient == caller);
+      }
     );
-    filtered.sort(Notification.compareByCreatedAt);
+
+    let sortedMessages = filteredMessages.sort(Message.compareByCreatedAt);
+
+    for (message in sortedMessages.values()) {
+      if (message.recipient == caller and not message.read) {
+        messages.add(message.id, { message with read = true });
+      };
+    };
+    sortedMessages;
   };
 
-  public shared ({ caller }) func markNotificationAsRead(notificationId : Nat) : async () {
+  public shared ({ caller }) func getConversations() : async [Principal] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can mark notifications as read");
+      Runtime.trap("Unauthorized: Only users can retrieve conversations");
     };
 
-    let notification = switch (notifications.get(notificationId)) {
-      case (null) { Runtime.trap("Notification not found") };
-      case (?n) { n };
+    let conversations = Set.empty<Principal>();
+
+    for (message in messages.values()) {
+      if (message.sender == caller) {
+        conversations.add(message.recipient);
+      } else if (message.recipient == caller) {
+        conversations.add(message.sender);
+      };
     };
 
-    if (notification.recipientId != caller) {
-      Runtime.trap("Unauthorized: Can only mark your own notifications as read");
-    };
-
-    let updatedNotification = { notification with read = true };
-    notifications.add(notificationId, updatedNotification);
+    conversations.toArray();
   };
 
   // Story Functions
@@ -414,7 +457,6 @@ actor {
       stories.add(storyId, story);
     };
 
-    // Convert to StoryView for return
     {
       story with
       views = story.views.toArray();
@@ -427,7 +469,10 @@ actor {
     };
 
     let now = Time.now();
-    stories.values().toArray().filter(func(s) { s.expiresAt > now }).map(
+
+    stories.values().toArray().filter(
+      func(story) { story.expiresAt > now }
+    ).map(
       func(story) {
         {
           story with
@@ -435,6 +480,113 @@ actor {
         };
       }
     );
+  };
+
+  // Comment Functions
+  public shared ({ caller }) func addComment(postId : Nat, content : Text) : async Comment {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can add comments");
+    };
+
+    let post = switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?p) { p };
+    };
+
+    let comment : Comment = {
+      id = nextCommentId;
+      postId;
+      author = caller;
+      content;
+      createdAt = Time.now();
+    };
+
+    // Add comment to post's comments list
+    post.comments.add(comment);
+
+    // Update post in the canister
+    posts.add(postId, post);
+
+    nextCommentId += 1;
+
+    if (post.author != caller) {
+      createNotification(post.author, "comment", postId, caller);
+    };
+
+    comment;
+  };
+
+  public shared ({ caller }) func addCommentBackend(postId : Nat, text : Text, author : Principal) : async Bool {
+    // Authorization check: Only users can add comments
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can add comments");
+    };
+
+    if (caller != author) {
+      Runtime.trap("Unauthorized: Cannot create comments on behalf of other users");
+    };
+
+    let comment : Comment = {
+      id = nextCommentId;
+      postId;
+      author;
+      content = text;
+      createdAt = Time.now();
+    };
+
+    switch (posts.get(postId)) {
+      case (?post) {
+        post.comments.add(comment);
+        posts.add(postId, post);
+        nextCommentId += 1;
+
+        if (post.author != caller) {
+          createNotification(post.author, "comment", postId, caller);
+        };
+
+        true;
+      };
+      case (null) { false };
+    };
+  };
+
+  public query ({ caller }) func getComments(postId : Nat) : async [Comment] {
+    // Authorization: Comments are public - any user including guests can view
+    switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?post) {
+        let comments = post.comments.toArray();
+        comments.sort(Comment.compareByCreatedAt);
+      };
+    };
+  };
+
+  // Notification Functions
+  public query ({ caller }) func getNotifications() : async [Notification] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view notifications");
+    };
+
+    let filtered = notifications.values().toArray().filter(func(notification) { notification.recipientId == caller });
+    filtered.sort(Notification.compareByCreatedAt);
+  };
+
+  public shared ({ caller }) func markNotificationAsRead(notificationId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark notifications as read");
+    };
+
+    let notification = switch (notifications.get(notificationId)) {
+      case (null) { Runtime.trap("Notification not found") };
+      case (?n) { n };
+    };
+
+    if (notification.recipientId != caller) {
+      Runtime.trap("Unauthorized: Can only mark your own notifications as read");
+    };
+
+    let updatedNotification = { notification with read = true };
+    notifications.add(notificationId, updatedNotification);
   };
 
   // Stripe Integration
@@ -471,12 +623,21 @@ actor {
     };
   };
 
-  // Social Features
-  public query ({ caller }) func getUserData(user : Principal) : async ?User {
-    // Authorization: User data (followers/following) is public information
-    users.get(user);
+  public shared ({ caller }) func subscribeUser() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can subscribe");
+    };
+
+    let profile = switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?p) { p };
+    };
+
+    let updatedProfile = { profile with subscription = true };
+    userProfiles.add(caller, updatedProfile);
   };
 
+  // Social Features
   public shared ({ caller }) func createUser() : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create user data");
@@ -508,7 +669,6 @@ actor {
       case (?u) { u };
     };
 
-    // Use array iter find to check for existence
     switch (user.following.values().find(func(f) { f == followee })) {
       case (?_) { Runtime.trap("Already following user") };
       case (null) {};
@@ -522,7 +682,6 @@ actor {
       case (?u) { u };
     };
 
-    // Use array iter find to check for existence
     switch (followeeUser.followers.values().find(func(f) { f == caller })) {
       case (?_) { Runtime.trap("Already a follower") };
       case (null) {};
@@ -542,7 +701,6 @@ actor {
       case (?u) { u };
     };
 
-    // Use array iter find to check for existence
     switch (user.following.values().find(func(f) { f == followee })) {
       case (null) { Runtime.trap("Not following user") };
       case (?_) {};

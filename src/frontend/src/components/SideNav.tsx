@@ -9,6 +9,7 @@ import {
   LogOut,
   MessageCircle,
   Search,
+  Settings,
   User,
 } from "lucide-react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
@@ -22,6 +23,7 @@ const navItems = [
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/subscribe", label: "Subscribe", icon: CreditCard },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function SideNav() {

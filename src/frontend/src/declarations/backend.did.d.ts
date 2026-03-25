@@ -18,6 +18,14 @@ export interface Comment {
   'postId' : bigint,
 }
 export type ExternalBlob = Uint8Array;
+export interface Message {
+  'id' : bigint,
+  'content' : string,
+  'createdAt' : Time,
+  'read' : boolean,
+  'recipient' : Principal,
+  'sender' : Principal,
+}
 export interface Notification {
   'id' : bigint,
   '_type' : string,
@@ -68,14 +76,12 @@ export interface TransformationOutput {
   'body' : Uint8Array,
   'headers' : Array<http_header>,
 }
-export interface User {
-  'followers' : Array<Principal>,
-  'following' : Array<Principal>,
-}
 export interface UserProfile {
+  'bio' : [] | [string],
   'username' : string,
   'subscription' : boolean,
   'email' : string,
+  'website' : [] | [string],
   'followers' : [] | [Array<Principal>],
   'following' : [] | [Array<Principal>],
 }
@@ -132,12 +138,14 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getComments' : ActorMethod<[bigint], Array<Comment>>,
+  'getConversations' : ActorMethod<[], Array<Principal>>,
   'getFeed' : ActorMethod<[], Array<PostView>>,
   'getFollowers' : ActorMethod<[Principal], Array<Principal>>,
   'getFollowing' : ActorMethod<[Principal], Array<Principal>>,
+  'getMessages' : ActorMethod<[Principal], Array<Message>>,
   'getNotifications' : ActorMethod<[], Array<Notification>>,
+  'getSavedPosts' : ActorMethod<[], Array<PostView>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
-  'getUserData' : ActorMethod<[Principal], [] | [User]>,
   'getUserPosts' : ActorMethod<[Principal], Array<PostView>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getUserStats' : ActorMethod<
@@ -150,10 +158,13 @@ export interface _SERVICE {
   'likePost' : ActorMethod<[bigint], undefined>,
   'markNotificationAsRead' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'savePost' : ActorMethod<[bigint], undefined>,
+  'sendMessage' : ActorMethod<[Principal, string], Message>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'subscribeUser' : ActorMethod<[], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'unfollowUser' : ActorMethod<[Principal], undefined>,
+  'unsavePost' : ActorMethod<[bigint], undefined>,
   'viewStory' : ActorMethod<[bigint], StoryView>,
 }
 export declare const idlService: IDL.ServiceClass;

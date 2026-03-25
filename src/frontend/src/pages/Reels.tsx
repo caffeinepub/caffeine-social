@@ -1,14 +1,28 @@
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Heart,
+  Loader2,
   MessageCircle,
   Music2,
+  Plus,
   Send,
+  Upload,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type { PostView } from "../backend";
+import { ExternalBlob } from "../backend";
+import { useCreatePost } from "../hooks/useCreatePost";
 import { useGetFeed } from "../hooks/useGetFeed";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useLikePost } from "../hooks/useLikePost";
@@ -147,9 +161,124 @@ function ReelItem({
   );
 }
 
+function CreateReelDialog({
+  open,
+  onClose,
+}: { open: boolean; onClose: () => void }) {
+  const [caption, setCaption] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
+  const { mutateAsync: createPost, isPending } = useCreatePost();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async () => {
+    if (!caption.trim() && !file) {
+      toast.error("Add a caption or media");
+      return;
+    }
+    try {
+      let media: ExternalBlob | null = null;
+      if (file) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        media = ExternalBlob.fromBytes(bytes).withUploadProgress((p) =>
+          setProgress(Math.round(p)),
+        );
+      }
+      await createPost({ content: caption, media });
+      toast.success("Reel created!");
+      setCaption("");
+      setFile(null);
+      setProgress(0);
+      onClose();
+    } catch {
+      toast.error("Failed to create reel");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md" data-ocid="reels.dialog">
+        <DialogHeader>
+          <DialogTitle>Create Reel</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors"
+            data-ocid="reels.upload_button"
+          >
+            {file ? (
+              <>
+                <Upload className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <p className="text-sm font-medium">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024 / 1024).toFixed(1)} MB
+                </p>
+              </>
+            ) : (
+              <>
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium">Upload video or image</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  MP4, MOV, JPG, PNG
+                </p>
+              </>
+            )}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="video/*,image/*"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+          <Textarea
+            placeholder="Write a caption..."
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            rows={3}
+            data-ocid="reels.textarea"
+          />
+          {isPending && progress > 0 && (
+            <div>
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1 text-center">
+                {progress}% uploaded
+              </p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="gradient-bg text-white border-0 flex-1"
+              data-ocid="reels.submit_button"
+            >
+              {isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              {isPending ? "Uploading..." : "Share Reel"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              data-ocid="reels.cancel_button"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Reels() {
   const { data: allPosts = [], isLoading } = useGetFeed();
+  const { identity } = useInternetIdentity();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const reels = allPosts.length > 0 ? allPosts : SAMPLE_REELS;
@@ -172,22 +301,42 @@ export default function Reels() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      onScroll={handleScroll}
-      className="fixed inset-0 overflow-y-scroll snap-y snap-mandatory bg-black scrollbar-none"
-      style={{ top: 0, paddingTop: 0 }}
-      data-ocid="reels.list"
-    >
-      {reels.map((reel, i) => (
-        <ReelItem
-          key={reel.id.toString()}
-          post={reel}
-          index={i}
-          isActive={i === activeIndex}
-        />
-      ))}
-    </div>
+    <>
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="fixed inset-0 overflow-y-scroll snap-y snap-mandatory bg-black scrollbar-none"
+        style={{ top: 0, paddingTop: 0 }}
+        data-ocid="reels.list"
+      >
+        {reels.map((reel, i) => (
+          <ReelItem
+            key={reel.id.toString()}
+            post={reel}
+            index={i}
+            isActive={i === activeIndex}
+          />
+        ))}
+      </div>
+
+      {/* Create Reel FAB */}
+      {identity && (
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="fixed top-16 right-4 z-50 w-10 h-10 gradient-bg rounded-full flex items-center justify-center shadow-glow hover:opacity-90 transition-opacity"
+          data-ocid="reels.open_modal_button"
+          aria-label="Create reel"
+        >
+          <Plus className="w-5 h-5 text-white" />
+        </button>
+      )}
+
+      <CreateReelDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
+    </>
   );
 }
 
