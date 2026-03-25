@@ -1,11 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Film, Home, Search, User } from "lucide-react";
+import {
+  BookOpen,
+  Film,
+  Home,
+  MessageCircle,
+  Search,
+  User,
+} from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
   { to: "/explore", label: "Search", icon: Search },
   { to: "/reels", label: "Reels", icon: Film },
   { to: "/stories", label: "Stories", icon: BookOpen },
+  { to: "/messages", label: "Messages", icon: MessageCircle },
   { to: "/profile", label: "Profile", icon: User },
 ];
 

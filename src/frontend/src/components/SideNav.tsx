@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
+  Bell,
   BookOpen,
   CreditCard,
   Film,
   Home,
   LogOut,
+  MessageCircle,
   Search,
   User,
 } from "lucide-react";
@@ -16,6 +18,8 @@ const navItems = [
   { to: "/explore", label: "Explore", icon: Search },
   { to: "/reels", label: "Reels", icon: Film },
   { to: "/stories", label: "Stories", icon: BookOpen },
+  { to: "/messages", label: "Messages", icon: MessageCircle },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/subscribe", label: "Subscribe", icon: CreditCard },
 ];

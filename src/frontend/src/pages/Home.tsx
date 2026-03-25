@@ -1,8 +1,15 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import CreatePostForm from "../components/CreatePostForm";
 import PostCard from "../components/PostCard";
 import StoryViewer from "../components/StoryViewer";
 import { useGetActiveStories } from "../hooks/useGetActiveStories";
@@ -29,6 +36,7 @@ export default function Home() {
 
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
+  const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const isAuthenticated = !!identity;
   const myInitial = userProfile?.username?.slice(0, 2).toUpperCase() ?? "?";
@@ -181,7 +189,7 @@ export default function Home() {
       {isAuthenticated && (
         <button
           type="button"
-          onClick={() => navigate({ to: "/explore" })}
+          onClick={() => setCreatePostOpen(true)}
           className="fixed bottom-20 right-4 md:bottom-8 md:right-8 w-14 h-14 gradient-bg rounded-full shadow-glow flex items-center justify-center hover:opacity-90 transition-opacity z-40"
           data-ocid="home.open_modal_button"
           aria-label="Create post"
@@ -189,6 +197,16 @@ export default function Home() {
           <Plus className="w-7 h-7 text-white" />
         </button>
       )}
+
+      {/* Create Post Dialog */}
+      <Dialog open={createPostOpen} onOpenChange={setCreatePostOpen}>
+        <DialogContent className="max-w-md" data-ocid="home.dialog">
+          <DialogHeader>
+            <DialogTitle>Create Post</DialogTitle>
+          </DialogHeader>
+          <CreatePostForm />
+        </DialogContent>
+      </Dialog>
 
       {storyViewerOpen && stories.length > 0 && (
         <StoryViewer

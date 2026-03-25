@@ -1,14 +1,18 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bookmark, Crown, Film, Grid3X3, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { PostView } from "../backend";
 import LoginButton from "../components/LoginButton";
 import { useGetUserPosts } from "../hooks/useGetUserPosts";
 import { useGetUserProfile } from "../hooks/useGetUserProfile";
 import { useGetUserStats } from "../hooks/useGetUserStats";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useSaveCallerUserProfile } from "../hooks/useSaveCallerUserProfile";
 
 function getInitials(name: string) {
   return name
@@ -74,6 +78,8 @@ export default function Profile() {
   const { identity } = useInternetIdentity();
   const currentUserPrincipal = identity?.getPrincipal();
   const [editMode, setEditMode] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   const { data: userProfile, isLoading: profileLoading } =
     useGetUserProfile(currentUserPrincipal);
@@ -81,6 +87,15 @@ export default function Profile() {
     useGetUserPosts(currentUserPrincipal);
   const { data: userStats, isLoading: statsLoading } =
     useGetUserStats(currentUserPrincipal);
+  const { mutate: saveProfile, isPending: isSaving } =
+    useSaveCallerUserProfile();
+
+  useEffect(() => {
+    if (userProfile) {
+      setEditUsername(userProfile.username ?? "");
+      setEditEmail(userProfile.email ?? "");
+    }
+  }, [userProfile]);
 
   if (!identity) {
     return (
@@ -115,6 +130,25 @@ export default function Profile() {
   const followersCount = userStats ? Number(userStats.followers) : 0;
   const followingCount = userStats ? Number(userStats.following) : 0;
 
+  const handleSaveProfile = () => {
+    saveProfile(
+      {
+        username: editUsername,
+        email: editEmail,
+        subscription: userProfile?.subscription ?? false,
+      },
+      {
+        onSuccess: () => {
+          setEditMode(false);
+          toast.success("Profile updated successfully!");
+        },
+        onError: (error) => {
+          toast.error(`Failed to update profile: ${error.message}`);
+        },
+      },
+    );
+  };
+
   return (
     <div className="max-w-xl mx-auto">
       {/* Cover gradient */}
@@ -139,9 +173,72 @@ export default function Profile() {
             className="border-border hover:border-primary hover:text-primary"
             data-ocid="profile.edit_button"
           >
-            Edit Profile
+            {editMode ? "Cancel" : "Edit Profile"}
           </Button>
         </div>
+
+        {/* Edit form */}
+        {editMode && (
+          <div
+            className="bg-card border border-border rounded-xl p-4 mb-4 space-y-3"
+            data-ocid="profile.panel"
+          >
+            <h2 className="text-sm font-semibold mb-2">Edit Profile</h2>
+            <div className="space-y-1">
+              <Label htmlFor="edit-username" className="text-xs">
+                Username
+              </Label>
+              <Input
+                id="edit-username"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                placeholder="Enter username"
+                disabled={isSaving}
+                data-ocid="profile.input"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="edit-email" className="text-xs">
+                Email
+              </Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="Enter email"
+                disabled={isSaving}
+                data-ocid="profile.input"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleSaveProfile}
+                disabled={isSaving || !editUsername.trim()}
+                size="sm"
+                className="gradient-bg text-white border-0"
+                data-ocid="profile.save_button"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+              <Button
+                onClick={() => setEditMode(false)}
+                variant="outline"
+                size="sm"
+                disabled={isSaving}
+                data-ocid="profile.cancel_button"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Name & bio */}
         <div className="mb-4">
