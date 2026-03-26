@@ -1,17 +1,22 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "@tanstack/react-router";
 import {
   Bookmark,
+  Camera,
   Crown,
   ExternalLink,
   Film,
   Grid3X3,
   Loader2,
+  MessageCircle,
   Settings,
+  X,
 } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type { PostView } from "../backend";
 import LoginButton from "../components/LoginButton";
 import { useGetCallerUserProfile } from "../hooks/useGetCallerUserProfile";
@@ -19,6 +24,7 @@ import { useGetSavedPosts } from "../hooks/useGetSavedPosts";
 import { useGetUserPosts } from "../hooks/useGetUserPosts";
 import { useGetUserStats } from "../hooks/useGetUserStats";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useSaveCallerUserProfile } from "../hooks/useSaveCallerUserProfile";
 
 function getInitials(name: string) {
   return name
@@ -38,6 +44,92 @@ const GRADIENT_PLACEHOLDERS = [
   "from-indigo-900 to-violet-600",
 ];
 
+function PostDetailModal({
+  post,
+  idx,
+  onClose,
+}: {
+  post: PostView;
+  idx: number;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      data-ocid="profile.modal"
+    >
+      {/* Backdrop button for close */}
+      <button
+        type="button"
+        className="absolute inset-0 w-full h-full cursor-default"
+        onClick={onClose}
+        aria-label="Close modal"
+      />
+      <div className="relative bg-card border border-border rounded-xl overflow-hidden max-w-lg w-full max-h-[90vh] flex flex-col z-10">
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+          data-ocid="profile.close_button"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Media */}
+        <div className="aspect-square bg-secondary overflow-hidden flex-shrink-0">
+          {post.media ? (
+            <img
+              src={post.media.getDirectURL()}
+              alt="Post"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className={`w-full h-full bg-gradient-to-br ${GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]} flex items-center justify-center`}
+            >
+              <p className="text-white text-center px-6 text-lg font-medium">
+                {post.content}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-4 overflow-y-auto">
+          {post.content && post.media && (
+            <p className="text-sm mb-3">{post.content}</p>
+          )}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="text-base">❤️</span>
+              {post.likes.length} {post.likes.length === 1 ? "like" : "likes"}
+            </span>
+            <span className="flex items-center gap-1">
+              <MessageCircle className="w-4 h-4" />
+              {post.comments.length}{" "}
+              {post.comments.length === 1 ? "comment" : "comments"}
+            </span>
+          </div>
+          {post.comments.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {post.comments.slice(0, 5).map((c) => (
+                <p key={c.id.toString()} className="text-sm">
+                  <span className="font-semibold mr-2">
+                    {c.author.toString().slice(0, 8)}...
+                  </span>
+                  {c.content}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PostGrid({
   posts,
   emptyIcon: EmptyIcon,
@@ -49,6 +141,11 @@ function PostGrid({
   emptyTitle: string;
   emptyDesc: string;
 }) {
+  const [selectedPost, setSelectedPost] = useState<{
+    post: PostView;
+    idx: number;
+  } | null>(null);
+
   if (posts.length === 0) {
     return (
       <div className="text-center py-16" data-ocid="profile.empty_state">
@@ -60,42 +157,53 @@ function PostGrid({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-0.5" data-ocid="profile.list">
-      {posts.map((post, idx) => (
-        <div
-          key={post.id.toString()}
-          className="aspect-square overflow-hidden group cursor-pointer relative"
-          data-ocid={`profile.item.${idx + 1}`}
-        >
-          {post.media ? (
-            <img
-              src={post.media.getDirectURL()}
-              alt="Post"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div
-              className={`w-full h-full bg-gradient-to-br ${GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]} flex items-center justify-center`}
-            >
-              <p className="text-white text-xs text-center px-2 line-clamp-3 font-medium">
-                {post.content}
-              </p>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <span className="text-white text-xs font-bold">
-              ❤️ {post.likes.length}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-3 gap-0.5" data-ocid="profile.list">
+        {posts.map((post, idx) => (
+          <button
+            key={post.id.toString()}
+            type="button"
+            className="aspect-square overflow-hidden group cursor-pointer relative"
+            data-ocid={`profile.item.${idx + 1}`}
+            onClick={() => setSelectedPost({ post, idx })}
+            aria-label="View post"
+          >
+            {post.media ? (
+              <img
+                src={post.media.getDirectURL()}
+                alt="Post"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div
+                className={`w-full h-full bg-gradient-to-br ${GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]} flex items-center justify-center`}
+              >
+                <p className="text-white text-xs text-center px-2 line-clamp-3 font-medium">
+                  {post.content}
+                </p>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+          </button>
+        ))}
+      </div>
+
+      {selectedPost && (
+        <PostDetailModal
+          post={selectedPost.post}
+          idx={selectedPost.idx}
+          onClose={() => setSelectedPost(null)}
+        />
+      )}
+    </>
   );
 }
 
 export default function Profile() {
   const { identity } = useInternetIdentity();
   const currentUserPrincipal = identity?.getPrincipal();
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: userProfile, isLoading: profileLoading } =
     useGetCallerUserProfile();
@@ -104,6 +212,36 @@ export default function Profile() {
   const { data: userStats, isLoading: statsLoading } =
     useGetUserStats(currentUserPrincipal);
   const { data: savedPosts = [], isLoading: savedLoading } = useGetSavedPosts();
+  const { mutate: saveProfile } = useSaveCallerUserProfile();
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userProfile) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB");
+      return;
+    }
+    setUploadingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      saveProfile(
+        { ...userProfile, profilePhoto: dataUrl },
+        {
+          onSuccess: () => {
+            toast.success("Profile photo updated!");
+            setUploadingPhoto(false);
+          },
+          onError: () => {
+            toast.error("Failed to update photo");
+            setUploadingPhoto(false);
+          },
+        },
+      );
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   if (!identity) {
     return (
@@ -159,14 +297,44 @@ export default function Profile() {
       {/* Avatar + info */}
       <div className="px-4 pb-4">
         <div className="flex items-end justify-between -mt-12 mb-4">
-          <div className="story-ring w-24 h-24">
-            <div className="story-ring-inner w-full h-full">
-              <Avatar className="w-full h-full">
-                <AvatarFallback className="gradient-bg text-white text-2xl font-bold">
-                  {getInitials(username)}
-                </AvatarFallback>
-              </Avatar>
+          <div className="relative">
+            <div className="story-ring w-24 h-24">
+              <div className="story-ring-inner w-full h-full">
+                <Avatar className="w-full h-full">
+                  {userProfile?.profilePhoto && (
+                    <AvatarImage
+                      src={userProfile.profilePhoto}
+                      alt={username}
+                    />
+                  )}
+                  <AvatarFallback className="gradient-bg text-white text-2xl font-bold">
+                    {getInitials(username)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             </div>
+            {/* Camera icon overlay */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="absolute bottom-0 right-0 w-8 h-8 gradient-bg rounded-full flex items-center justify-center border-2 border-background hover:opacity-90 transition-opacity"
+              aria-label="Change profile photo"
+              data-ocid="profile.upload_button"
+            >
+              {uploadingPhoto ? (
+                <Loader2 className="w-4 h-4 text-white animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4 text-white" />
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -215,6 +383,9 @@ export default function Profile() {
               {userProfile.email}
             </p>
           )}
+          <p className="text-xs text-muted-foreground mt-1 font-mono">
+            ID: {currentUserPrincipal?.toString().slice(0, 20)}...
+          </p>
         </div>
 
         {/* Stats */}

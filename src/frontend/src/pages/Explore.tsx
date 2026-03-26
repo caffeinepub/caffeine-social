@@ -1,4 +1,7 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import type { PostView } from "../backend";
@@ -8,13 +11,20 @@ const FILTER_TABS = ["All", "Photos", "Videos", "People"] as const;
 type FilterTab = (typeof FILTER_TABS)[number];
 
 const TRENDING_HASHTAGS = [
-  "#photography",
+  "#funny",
+  "#gym",
   "#reels",
-  "#art",
+  "#dance",
+  "#fashion",
+  "#tech",
+  "#cricket",
   "#travel",
   "#food",
-  "#fitness",
+  "#art",
+  "#viral",
   "#music",
+  "#photography",
+  "#fitness",
   "#memes",
 ];
 
@@ -35,6 +45,7 @@ export default function Explore() {
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
   const [activeHashtag, setActiveHashtag] = useState<string | null>(null);
   const { data: posts = [], isLoading } = useGetFeed();
+  const navigate = useNavigate();
 
   const filtered = posts.filter((p) => {
     const searchStr = query || (activeHashtag ?? "");
@@ -55,6 +66,19 @@ export default function Explore() {
       : posts.length === 0
         ? SAMPLE_EXPLORE_POSTS
         : [];
+
+  // Extract unique authors for People tab
+  const allPosts = posts.length > 0 ? posts : SAMPLE_EXPLORE_POSTS;
+  const authorMap = new Map<string, { principal: string; name: string }>();
+  for (const p of allPosts) {
+    const pid = p.author.toString();
+    if (!authorMap.has(pid)) {
+      authorMap.set(pid, { principal: pid, name: pid });
+    }
+  }
+  const authors = Array.from(authorMap.values()).filter((a) =>
+    query ? a.principal.toLowerCase().includes(query.toLowerCase()) : true,
+  );
 
   const handleHashtag = (tag: string) => {
     setActiveHashtag(activeHashtag === tag ? null : tag);
@@ -125,8 +149,69 @@ export default function Explore() {
         ))}
       </div>
 
-      {/* Grid */}
-      {isLoading ? (
+      {/* People tab */}
+      {activeTab === "People" ? (
+        isLoading ? (
+          <div className="space-y-3" data-ocid="explore.loading_state">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-3">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-40 mb-2" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : authors.length === 0 ? (
+          <div className="text-center py-20" data-ocid="explore.empty_state">
+            <p className="text-lg font-semibold mb-1">No users found</p>
+            <p className="text-sm text-muted-foreground">
+              Try a different search
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1" data-ocid="explore.list">
+            {authors.map((author, idx) => (
+              <button
+                key={author.principal}
+                type="button"
+                onClick={() =>
+                  navigate({
+                    to: "/user/$userId",
+                    params: { userId: author.principal },
+                  })
+                }
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+                data-ocid={`explore.item.${idx + 1}`}
+              >
+                <Avatar className="w-12 h-12 flex-shrink-0">
+                  <AvatarFallback className="gradient-bg text-white font-bold">
+                    {author.principal.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">
+                    {author.principal.slice(0, 12)}...
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono truncate">
+                    {author.principal}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="gradient-bg text-white border-0 hover:opacity-90 flex-shrink-0 pointer-events-none"
+                  data-ocid="explore.primary_button"
+                  asChild={false}
+                >
+                  View Profile
+                </Button>
+              </button>
+            ))}
+          </div>
+        )
+      ) : /* Grid for All/Photos/Videos */
+      isLoading ? (
         <div
           className="grid grid-cols-3 gap-0.5"
           data-ocid="explore.loading_state"
@@ -145,8 +230,15 @@ export default function Explore() {
       ) : (
         <div className="grid grid-cols-3 gap-0.5" data-ocid="explore.list">
           {displayPosts.map((post, idx) => (
-            <div
+            <button
               key={post.id.toString()}
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: "/user/$userId",
+                  params: { userId: post.author.toString() },
+                })
+              }
               className="aspect-square overflow-hidden relative group cursor-pointer"
               data-ocid={`explore.item.${idx + 1}`}
             >
@@ -158,7 +250,9 @@ export default function Explore() {
                 />
               ) : (
                 <div
-                  className={`w-full h-full bg-gradient-to-br ${GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]} flex items-center justify-center`}
+                  className={`w-full h-full bg-gradient-to-br ${
+                    GRADIENT_PLACEHOLDERS[idx % GRADIENT_PLACEHOLDERS.length]
+                  } flex items-center justify-center`}
                 >
                   <p className="text-white text-xs text-center px-2 line-clamp-3 font-medium">
                     {post.content}
@@ -170,7 +264,7 @@ export default function Explore() {
                   ❤️ {post.likes.length}
                 </p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}

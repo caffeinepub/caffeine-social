@@ -1,12 +1,8 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { ExternalBlob } from "../backend";
+import InstagramUploadModal from "../components/InstagramUploadModal";
 import StoryViewer from "../components/StoryViewer";
-import { useCreateStory } from "../hooks/useCreateStory";
 import { useGetActiveStories } from "../hooks/useGetActiveStories";
 
 const STORY_COLORS = [
@@ -24,69 +20,9 @@ export default function Stories() {
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const { mutate: createStory, isPending } = useCreateStory();
-
   const handleStoryClick = (index: number) => {
     setSelectedStoryIndex(index);
     setViewerOpen(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
-        return;
-      }
-      setMediaFile(file);
-      const reader = new FileReader();
-      reader.onload = () => setMediaPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveMedia = () => {
-    setMediaFile(null);
-    setMediaPreview(null);
-    setUploadProgress(0);
-  };
-
-  const handleCloseCreate = () => {
-    setCreateOpen(false);
-    setMediaFile(null);
-    setMediaPreview(null);
-    setUploadProgress(0);
-  };
-
-  const handleSubmitStory = async () => {
-    if (!mediaFile) {
-      toast.error("Please select a photo for your story");
-      return;
-    }
-
-    const arrayBuffer = await mediaFile.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const mediaBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
-      (percentage) => {
-        setUploadProgress(percentage);
-      },
-    );
-
-    createStory(
-      { media: mediaBlob, expirationHours: BigInt(24) },
-      {
-        onSuccess: () => {
-          handleCloseCreate();
-          toast.success("Story created successfully!");
-        },
-        onError: (error) => {
-          toast.error(`Failed to create story: ${error.message}`);
-        },
-      },
-    );
   };
 
   if (isLoading) {
@@ -186,98 +122,11 @@ export default function Stories() {
         </div>
       )}
 
-      {/* Inline Create Story Modal */}
-      {createOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          data-ocid="stories.modal"
-        >
-          <div className="bg-card rounded-2xl p-4 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Create Story</h2>
-              <button
-                type="button"
-                onClick={handleCloseCreate}
-                className="text-muted-foreground hover:text-foreground"
-                disabled={isPending}
-                data-ocid="stories.close_button"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {mediaPreview ? (
-                <div className="relative rounded-lg overflow-hidden bg-muted">
-                  <img
-                    src={mediaPreview}
-                    alt="Preview"
-                    className="w-full h-auto max-h-72 object-cover"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={handleRemoveMedia}
-                    disabled={isPending}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() =>
-                    document.getElementById("story-file-input")?.click()
-                  }
-                  className="w-full border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary transition-colors"
-                  data-ocid="stories.dropzone"
-                >
-                  <Plus className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Click to select a photo
-                  </p>
-                </button>
-              )}
-
-              <input
-                id="story-file-input"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                data-ocid="stories.upload_button"
-              />
-
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <div className="space-y-1">
-                  <Progress value={uploadProgress} />
-                  <p className="text-xs text-center text-muted-foreground">
-                    Uploading... {uploadProgress}%
-                  </p>
-                </div>
-              )}
-
-              <Button
-                onClick={handleSubmitStory}
-                disabled={isPending || !mediaFile}
-                className="w-full gradient-bg text-white border-0"
-                data-ocid="stories.submit_button"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating Story...
-                  </>
-                ) : (
-                  "Share Story"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InstagramUploadModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        defaultType="story"
+      />
 
       {viewerOpen && stories.length > 0 && (
         <StoryViewer

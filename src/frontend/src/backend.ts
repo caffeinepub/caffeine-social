@@ -186,6 +186,7 @@ export interface UserProfile {
     bio?: string;
     username: string;
     subscription: boolean;
+    profilePhoto?: string;
     email: string;
     website?: string;
     followers?: Array<Principal>;
@@ -974,6 +975,7 @@ function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uin
     bio: [] | [string];
     username: string;
     subscription: boolean;
+    profilePhoto: [] | [string];
     email: string;
     website: [] | [string];
     followers: [] | [Array<Principal>];
@@ -982,6 +984,7 @@ function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uin
     bio?: string;
     username: string;
     subscription: boolean;
+    profilePhoto?: string;
     email: string;
     website?: string;
     followers?: Array<Principal>;
@@ -991,6 +994,7 @@ function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uin
         bio: record_opt_to_undefined(from_candid_opt_n22(_uploadFile, _downloadFile, value.bio)),
         username: value.username,
         subscription: value.subscription,
+        profilePhoto: record_opt_to_undefined(from_candid_opt_n22(_uploadFile, _downloadFile, value.profilePhoto)),
         email: value.email,
         website: record_opt_to_undefined(from_candid_opt_n22(_uploadFile, _downloadFile, value.website)),
         followers: record_opt_to_undefined(from_candid_opt_n23(_uploadFile, _downloadFile, value.followers)),
@@ -1096,6 +1100,7 @@ function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     bio?: string;
     username: string;
     subscription: boolean;
+    profilePhoto?: string;
     email: string;
     website?: string;
     followers?: Array<Principal>;
@@ -1104,6 +1109,7 @@ function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     bio: [] | [string];
     username: string;
     subscription: boolean;
+    profilePhoto: [] | [string];
     email: string;
     website: [] | [string];
     followers: [] | [Array<Principal>];
@@ -1113,6 +1119,7 @@ function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         bio: value.bio ? candid_some(value.bio) : candid_none(),
         username: value.username,
         subscription: value.subscription,
+        profilePhoto: value.profilePhoto ? candid_some(value.profilePhoto) : candid_none(),
         email: value.email,
         website: value.website ? candid_some(value.website) : candid_none(),
         followers: value.followers ? candid_some(value.followers) : candid_none(),

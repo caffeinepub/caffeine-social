@@ -9,10 +9,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Principal } from "@icp-sdk/core/principal";
-import { ArrowLeft, MessageCircle, Plus, Send } from "lucide-react";
+import { Principal } from "@dfinity/principal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  MessageCircle,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import LoginButton from "../components/LoginButton";
+import { useActor } from "../hooks/useActor";
 import { useGetConversations } from "../hooks/useGetConversations";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
@@ -122,9 +132,68 @@ function ChatWindow({
   onBack,
 }: { principalStr: string; onBack: () => void }) {
   const [inputText, setInputText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+  const [sending, setSending] = useState(false);
 
-  const [localMessages, setLocalMessages] = useState([
+  let recipientPrincipal: Principal | null = null;
+  try {
+    recipientPrincipal = Principal.fromText(principalStr);
+  } catch {
+    recipientPrincipal = null;
+  }
+
+  const { data: backendMessages = [] } = useQuery({
+    queryKey: ["messages", principalStr],
+    queryFn: async () => {
+      if (!actor || !recipientPrincipal) return [];
+      return actor.getMessages(recipientPrincipal);
+    },
+    enabled: !!actor && !actorFetching && !!identity && !!recipientPrincipal,
+    refetchInterval: 5000,
+  });
+
+  const myPrincipal = identity?.getPrincipal().toString();
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleSend = async () => {
+    if (!inputText.trim() || !actor || !recipientPrincipal || sending) return;
+    setSending(true);
+    const text = inputText.trim();
+    setInputText("");
+    setIsTyping(false);
+    try {
+      await actor.sendMessage(recipientPrincipal, text);
+      queryClient.invalidateQueries({ queryKey: ["messages", principalStr] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    } catch {
+      toast.error("Failed to send message");
+      setInputText(text);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value);
+    setIsTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 2000);
+  };
+
+  const displayName =
+    principalStr.length > 16
+      ? `${principalStr.slice(0, 8)}...${principalStr.slice(-4)}`
+      : principalStr;
+
+  const FALLBACK_MESSAGES = [
     {
       id: 1,
       text: "Hey! Loved your latest post 🔥",
@@ -143,31 +212,22 @@ function ChatWindow({
       mine: false,
       time: "10:35",
     },
-  ]);
+  ];
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    const msg = {
-      id: Date.now(),
-      text: inputText.trim(),
-      mine: true,
-      time: new Date().toLocaleTimeString("en", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-    setLocalMessages((prev) => [...prev, msg]);
-    setInputText("");
-  };
-
-  const displayName =
-    principalStr.length > 16
-      ? `${principalStr.slice(0, 8)}...${principalStr.slice(-4)}`
-      : principalStr;
+  const displayMessages =
+    backendMessages.length > 0
+      ? backendMessages.map((msg: any) => ({
+          id: msg.id?.toString() ?? Math.random(),
+          text: msg.content,
+          mine: msg.sender?.toString() === myPrincipal,
+          time: msg.createdAt
+            ? new Date(Number(msg.createdAt) / 1_000_000).toLocaleTimeString(
+                "en",
+                { hour: "2-digit", minute: "2-digit" },
+              )
+            : "",
+        }))
+      : FALLBACK_MESSAGES;
 
   return (
     <div
@@ -200,11 +260,11 @@ function ChatWindow({
 
       <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-3">
-          {localMessages.map((msg) => (
+          {displayMessages.map((msg, i) => (
             <div
-              key={msg.id}
+              key={`${msg.id}-${i}`}
               className={`flex ${msg.mine ? "justify-end" : "justify-start"}`}
-              data-ocid={`messages.item.${msg.id}`}
+              data-ocid={`messages.item.${i + 1}`}
             >
               <div
                 className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
@@ -218,8 +278,24 @@ function ChatWindow({
                   {msg.time}
                 </p>
               </div>
+              {/* Seen indicator under last sent message */}
+              {i === displayMessages.length - 1 && msg.mine && (
+                <p className="absolute text-[10px] text-muted-foreground text-right mt-0.5 mr-2 self-end translate-y-5">
+                  Seen
+                </p>
+              )}
             </div>
           ))}
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex justify-start mt-2">
+              <div className="bg-secondary rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1">
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -229,7 +305,7 @@ function ChatWindow({
           type="text"
           placeholder="Message..."
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={(e) => {
             if (e.key === "Enter") handleSend();
           }}
@@ -239,7 +315,7 @@ function ChatWindow({
         <button
           type="button"
           onClick={handleSend}
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || sending}
           className="w-9 h-9 gradient-bg rounded-full flex items-center justify-center hover:opacity-90 disabled:opacity-50"
           data-ocid="messages.submit_button"
         >
@@ -256,8 +332,35 @@ export default function Messages() {
     null,
   );
   const [newMsgOpen, setNewMsgOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deletedSamples, setDeletedSamples] = useState<Set<string>>(new Set());
+  const [deletedBackend, setDeletedBackend] = useState<Set<string>>(new Set());
   const { data: conversations = [], isLoading: convLoading } =
     useGetConversations();
+
+  const handleDeleteSample = (name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletedSamples((prev) => new Set([...prev, name]));
+    toast.success("Conversation deleted");
+  };
+
+  const handleDeleteBackend = (principal: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletedBackend((prev) => new Set([...prev, principal]));
+    toast.success("Conversation deleted");
+  };
+
+  const filteredConversations = conversations.filter(
+    (p: Principal) =>
+      !deletedBackend.has(p.toString()) &&
+      p.toString().toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const filteredSamples = SAMPLE_CONVERSATIONS.filter(
+    (c) =>
+      !deletedSamples.has(c.name) &&
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   if (!identity) {
     return (
@@ -296,6 +399,21 @@ export default function Messages() {
         </button>
       </div>
 
+      {/* Search bar */}
+      <div className="px-4 py-2 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-secondary rounded-full pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            data-ocid="messages.search_input"
+          />
+        </div>
+      </div>
+
       {convLoading ? (
         <div
           className="divide-y divide-border"
@@ -313,78 +431,115 @@ export default function Messages() {
         </div>
       ) : conversations.length > 0 ? (
         <div className="divide-y divide-border">
-          {conversations.map((principal: Principal, idx) => (
-            <button
+          {filteredConversations.map((principal: Principal, idx: number) => (
+            <div
               key={principal.toString()}
-              type="button"
-              onClick={() => setActiveConvPrincipal(principal.toString())}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
+              className="group flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors"
               data-ocid={`messages.item.${idx + 1}`}
             >
-              <div className="story-ring w-12 h-12 flex-shrink-0">
-                <div className="story-ring-inner w-full h-full">
-                  <Avatar className="w-full h-full">
-                    <AvatarFallback className="gradient-bg text-white text-sm font-bold">
-                      {principal.toString().slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">
-                  {principal.toString().slice(0, 12)}...
-                </p>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  Tap to view messages
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="divide-y divide-border">
-          {SAMPLE_CONVERSATIONS.map((conv, idx) => (
-            <button
-              key={conv.name}
-              type="button"
-              onClick={() => setActiveConvPrincipal(conv.name)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left"
-              data-ocid={`messages.item.${idx + 1}`}
-            >
-              <div className="relative">
-                <div className="story-ring w-12 h-12">
+              <button
+                type="button"
+                onClick={() => setActiveConvPrincipal(principal.toString())}
+                className="flex items-center gap-3 flex-1 min-w-0 text-left"
+              >
+                <div className="story-ring w-12 h-12 flex-shrink-0">
                   <div className="story-ring-inner w-full h-full">
                     <Avatar className="w-full h-full">
                       <AvatarFallback className="gradient-bg text-white text-sm font-bold">
-                        {conv.initial}
+                        {principal.toString().slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                 </div>
-                {conv.online && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-background" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">
+                    {principal.toString().slice(0, 12)}...
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    Tap to view messages
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleDeleteBackend(principal.toString(), e)}
+                className="opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 opacity-100 p-2 text-muted-foreground hover:text-red-400 transition-all flex-shrink-0"
+                aria-label="Delete conversation"
+                data-ocid={`messages.delete_button.${idx + 1}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {filteredSamples.map((conv, idx) => (
+            <div
+              key={conv.name}
+              className="group flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors"
+              data-ocid={`messages.item.${idx + 1}`}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveConvPrincipal(conv.name)}
+                className="flex items-center gap-3 flex-1 min-w-0 text-left"
+              >
+                <div className="relative">
+                  <div className="story-ring w-12 h-12">
+                    <div className="story-ring-inner w-full h-full">
+                      <Avatar className="w-full h-full">
+                        <AvatarFallback className="gradient-bg text-white text-sm font-bold">
+                          {conv.initial}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                  {conv.online && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-background" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{conv.name}</p>
+                    <p className="text-xs text-muted-foreground">{conv.time}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {conv.lastMessage}
+                  </p>
+                </div>
+                {conv.unread > 0 && (
+                  <div className="w-5 h-5 gradient-bg rounded-full flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0">
+                    {conv.unread}
+                  </div>
                 )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">{conv.name}</p>
-                  <p className="text-xs text-muted-foreground">{conv.time}</p>
-                </div>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {conv.lastMessage}
-                </p>
-              </div>
-              {conv.unread > 0 && (
-                <div className="w-5 h-5 gradient-bg rounded-full flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0">
-                  {conv.unread}
-                </div>
-              )}
-            </button>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleDeleteSample(conv.name, e)}
+                className="md:opacity-0 md:group-hover:opacity-100 p-2 text-muted-foreground hover:text-red-400 transition-all flex-shrink-0"
+                aria-label="Delete conversation"
+                data-ocid={`messages.delete_button.${idx + 1}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           ))}
         </div>
       )}
 
-      {conversations.length === 0 && !convLoading && (
+      {conversations.length === 0 &&
+        !convLoading &&
+        filteredSamples.length === 0 &&
+        searchQuery && (
+          <div className="text-center py-8" data-ocid="messages.empty_state">
+            <p className="text-sm text-muted-foreground">
+              No conversations found for "{searchQuery}"
+            </p>
+          </div>
+        )}
+
+      {conversations.length === 0 && !convLoading && !searchQuery && (
         <div
           className="text-center py-10 border-t border-border"
           data-ocid="messages.empty_state"

@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Play } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PostView } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
@@ -19,6 +19,8 @@ export default function ReelPlayer({
 }: ReelPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [following, setFollowing] = useState(false);
   const { identity } = useInternetIdentity();
   const { mutate: likePost, isPending } = useLikePost();
 
@@ -92,9 +94,10 @@ export default function ReelPlayer({
       {/* Info overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
         <div className="flex items-end justify-between">
+          {/* Left: author info */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Avatar className="w-10 h-10 border-2 border-white">
+            <div className="flex items-center gap-2 mb-2 pointer-events-auto flex-wrap">
+              <Avatar className="w-10 h-10 border-2 border-white flex-shrink-0">
                 <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white">
                   {authorUsername?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
@@ -102,11 +105,27 @@ export default function ReelPlayer({
               <span className="text-white font-medium">
                 {authorUsername || "Anonymous"}
               </span>
+              {/* Follow button */}
+              <button
+                type="button"
+                onClick={() => setFollowing((f) => !f)}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border transition-colors ${
+                  following
+                    ? "border-white/50 text-white/60 bg-white/10"
+                    : "border-white text-white hover:bg-white/20"
+                }`}
+                data-ocid="reels.toggle"
+                aria-label={following ? "Following" : "Follow"}
+              >
+                {following ? "Following" : "Follow"}
+              </button>
             </div>
             <p className="text-white text-sm">{post.content}</p>
           </div>
 
+          {/* Right: action buttons */}
           <div className="flex flex-col gap-4 ml-4 pointer-events-auto">
+            {/* Like */}
             <Button
               variant="ghost"
               size="icon"
@@ -117,6 +136,7 @@ export default function ReelPlayer({
                   ? "text-red-500 hover:text-red-600"
                   : "text-white hover:bg-white/20"
               }`}
+              data-ocid="reels.toggle"
             >
               <Heart className={`w-8 h-8 ${isLiked ? "fill-current" : ""}`} />
             </Button>
@@ -124,12 +144,30 @@ export default function ReelPlayer({
               {post.likes.length}
             </div>
 
+            {/* Comment */}
             <Button
               variant="ghost"
               size="icon"
               className="rounded-full text-white hover:bg-white/20"
+              data-ocid="reels.button"
             >
               <MessageCircle className="w-8 h-8" />
+            </Button>
+
+            {/* Save */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSaved((s) => !s)}
+              className={`rounded-full ${
+                saved
+                  ? "text-yellow-400 hover:text-yellow-500"
+                  : "text-white hover:bg-white/20"
+              }`}
+              data-ocid="reels.secondary_button"
+              aria-label={saved ? "Unsave" : "Save"}
+            >
+              <Bookmark className={`w-8 h-8 ${saved ? "fill-current" : ""}`} />
             </Button>
           </div>
         </div>

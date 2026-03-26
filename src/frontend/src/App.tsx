@@ -19,6 +19,7 @@ import Reels from "./pages/Reels";
 import Settings from "./pages/Settings";
 import Stories from "./pages/Stories";
 import Subscribe from "./pages/Subscribe";
+import UserProfilePage from "./pages/UserProfilePage";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -83,6 +84,14 @@ const paymentFailureRoute = createRoute({
   path: "/payment-failure",
   component: PaymentFailure,
 });
+const userProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/user/$userId",
+  component: function UserProfileRouteComponent() {
+    const { userId } = userProfileRoute.useParams();
+    return <UserProfilePage userId={userId} />;
+  },
+});
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -96,6 +105,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   paymentSuccessRoute,
   paymentFailureRoute,
+  userProfileRoute,
 ]);
 
 const router = createRouter({ routeTree });

@@ -1,15 +1,9 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useState } from "react";
-import CreatePostForm from "../components/CreatePostForm";
+import { useEffect, useRef, useState } from "react";
+import InstagramUploadModal from "../components/InstagramUploadModal";
 import PostCard from "../components/PostCard";
 import StoryViewer from "../components/StoryViewer";
 import { useGetActiveStories } from "../hooks/useGetActiveStories";
@@ -37,6 +31,8 @@ export default function Home() {
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const isAuthenticated = !!identity;
   const myInitial = userProfile?.username?.slice(0, 2).toUpperCase() ?? "?";
@@ -46,6 +42,21 @@ export default function Home() {
     setStoryIndex(idx);
     setStoryViewerOpen(true);
   };
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < posts.length) {
+          setVisibleCount((c) => c + 5);
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [visibleCount, posts.length]);
 
   return (
     <div className="max-w-[468px] mx-auto">
@@ -172,7 +183,7 @@ export default function Home() {
         </div>
       ) : (
         <div data-ocid="feed.list">
-          {posts.map((post) => (
+          {posts.slice(0, visibleCount).map((post) => (
             <PostCard
               key={post.id.toString()}
               post={post}
@@ -182,6 +193,21 @@ export default function Home() {
               }
             />
           ))}
+          {/* Sentinel for infinite scroll */}
+          <div ref={sentinelRef} className="py-2">
+            {visibleCount < posts.length && (
+              <div
+                className="flex justify-center py-4"
+                data-ocid="feed.loading_state"
+              >
+                <div className="flex items-center gap-1">
+                  <div className="typing-dot" />
+                  <div className="typing-dot" />
+                  <div className="typing-dot" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -198,15 +224,11 @@ export default function Home() {
         </button>
       )}
 
-      {/* Create Post Dialog */}
-      <Dialog open={createPostOpen} onOpenChange={setCreatePostOpen}>
-        <DialogContent className="max-w-md" data-ocid="home.dialog">
-          <DialogHeader>
-            <DialogTitle>Create Post</DialogTitle>
-          </DialogHeader>
-          <CreatePostForm />
-        </DialogContent>
-      </Dialog>
+      <InstagramUploadModal
+        open={createPostOpen}
+        onClose={() => setCreatePostOpen(false)}
+        defaultType="post"
+      />
 
       {storyViewerOpen && stories.length > 0 && (
         <StoryViewer

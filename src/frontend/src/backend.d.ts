@@ -100,6 +100,7 @@ export interface UserProfile {
     bio?: string;
     username: string;
     subscription: boolean;
+    profilePhoto?: string;
     email: string;
     website?: string;
     followers?: Array<Principal>;

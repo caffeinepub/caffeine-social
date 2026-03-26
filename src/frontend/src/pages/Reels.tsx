@@ -1,28 +1,17 @@
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Heart,
+  Bookmark,
+  BookmarkCheck,
   Loader2,
-  MessageCircle,
   Music2,
   Plus,
   Send,
-  Upload,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { Heart, MessageCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { PostView } from "../backend";
-import { ExternalBlob } from "../backend";
-import { useCreatePost } from "../hooks/useCreatePost";
+import InstagramUploadModal from "../components/InstagramUploadModal";
 import { useGetFeed } from "../hooks/useGetFeed";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useLikePost } from "../hooks/useLikePost";
@@ -52,6 +41,8 @@ function ReelItem({
   const { identity } = useInternetIdentity();
   const { mutate: likePost } = useLikePost();
   const [muted, setMuted] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [following, setFollowing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentUserPrincipal = identity?.getPrincipal().toString();
@@ -61,6 +52,21 @@ function ReelItem({
 
   const gradient = GRADIENT_PALETTES[index % GRADIENT_PALETTES.length];
   const song = REEL_SONGS[index % REEL_SONGS.length];
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isActive) {
+      const promise = video.play();
+      if (promise !== undefined) {
+        promise.catch(() => {
+          // autoplay blocked — ignore
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [isActive]);
 
   return (
     <div
@@ -72,7 +78,6 @@ function ReelItem({
           ref={videoRef}
           src={post.media.getDirectURL()}
           className="absolute inset-0 w-full h-full object-cover"
-          autoPlay={isActive}
           loop
           muted={muted}
           playsInline
@@ -127,6 +132,35 @@ function ReelItem({
           </div>
           <span className="text-white text-xs font-medium">Share</span>
         </button>
+        {/* Save button */}
+        <button
+          type="button"
+          onClick={() => setSaved((s) => !s)}
+          className="flex flex-col items-center gap-1"
+          data-ocid={`reels.toggle.${index + 1}`}
+        >
+          <div className="w-10 h-10 flex items-center justify-center">
+            {saved ? (
+              <BookmarkCheck className="w-7 h-7 text-yellow-400 fill-yellow-400" />
+            ) : (
+              <Bookmark className="w-7 h-7 text-white" />
+            )}
+          </div>
+          <span className="text-white text-xs font-medium">Save</span>
+        </button>
+        {/* Follow button */}
+        <button
+          type="button"
+          onClick={() => setFollowing((f) => !f)}
+          className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+            following
+              ? "border-white/50 text-white/70"
+              : "border-white text-white hover:bg-white/20"
+          }`}
+          data-ocid={`reels.toggle.${index + 1}`}
+        >
+          {following ? "Following" : "Follow"}
+        </button>
         {post.media && (
           <button
             type="button"
@@ -158,119 +192,6 @@ function ReelItem({
         </div>
       </div>
     </div>
-  );
-}
-
-function CreateReelDialog({
-  open,
-  onClose,
-}: { open: boolean; onClose: () => void }) {
-  const [caption, setCaption] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
-  const { mutateAsync: createPost, isPending } = useCreatePost();
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleSubmit = async () => {
-    if (!caption.trim() && !file) {
-      toast.error("Add a caption or media");
-      return;
-    }
-    try {
-      let media: ExternalBlob | null = null;
-      if (file) {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        media = ExternalBlob.fromBytes(bytes).withUploadProgress((p) =>
-          setProgress(Math.round(p)),
-        );
-      }
-      await createPost({ content: caption, media });
-      toast.success("Reel created!");
-      setCaption("");
-      setFile(null);
-      setProgress(0);
-      onClose();
-    } catch {
-      toast.error("Failed to create reel");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md" data-ocid="reels.dialog">
-        <DialogHeader>
-          <DialogTitle>Create Reel</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors"
-            data-ocid="reels.upload_button"
-          >
-            {file ? (
-              <>
-                <Upload className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="text-sm font-medium">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(file.size / 1024 / 1024).toFixed(1)} MB
-                </p>
-              </>
-            ) : (
-              <>
-                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm font-medium">Upload video or image</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  MP4, MOV, JPG, PNG
-                </p>
-              </>
-            )}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="video/*,image/*"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          <Textarea
-            placeholder="Write a caption..."
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            rows={3}
-            data-ocid="reels.textarea"
-          />
-          {isPending && progress > 0 && (
-            <div>
-              <Progress value={progress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                {progress}% uploaded
-              </p>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleSubmit}
-              disabled={isPending}
-              className="gradient-bg text-white border-0 flex-1"
-              data-ocid="reels.submit_button"
-            >
-              {isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              {isPending ? "Uploading..." : "Share Reel"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              data-ocid="reels.cancel_button"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -332,9 +253,10 @@ export default function Reels() {
         </button>
       )}
 
-      <CreateReelDialog
+      <InstagramUploadModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+        defaultType="reel"
       />
     </>
   );

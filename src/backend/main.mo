@@ -11,13 +11,13 @@ import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import Stripe "stripe/stripe";
 import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
-import Migration "migration";
 import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
 
+import MixinAuthorization "authorization/MixinAuthorization";
+
 // Specify the data migration function in with-clause
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 
@@ -73,9 +73,7 @@ actor {
 
   module Notification {
     public func compareByCreatedAt(a : Notification, b : Notification) : Order.Order {
-      if (a.createdAt > b.createdAt) {
-        #less;
-      } else if (a.createdAt < b.createdAt) {
+      if (a.createdAt > b.createdAt) { #less } else if (a.createdAt < b.createdAt) {
         #greater;
       } else { #equal };
     };
@@ -161,6 +159,7 @@ actor {
     following : ?[Principal];
     bio : ?Text;
     website : ?Text;
+    profilePhoto : ?Text; // New field for profile photo URL
   };
 
   // Helper function to create notifications
@@ -181,7 +180,7 @@ actor {
   // User Profile Functions (required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
+      Runtime.trap("Unauthorized: Only users can view their own profile");
     };
     userProfiles.get(caller);
   };
@@ -615,6 +614,10 @@ actor {
   };
 
   public shared ({ caller }) func createCheckoutSession(items : [Stripe.ShoppingItem], successUrl : Text, cancelUrl : Text) : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create checkout sessions");
+    };
+
     switch (stripeConfig) {
       case (null) { Runtime.trap("Stripe needs to be first configured") };
       case (?config) {
