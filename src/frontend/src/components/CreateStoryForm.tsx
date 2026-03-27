@@ -18,16 +18,22 @@ export default function CreateStoryForm() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isVideo, setIsVideo] = useState(false);
   const { mutate: createStory, isPending } = useCreateStory();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
+      const fileIsVideo = file.type.startsWith("video/");
+      const maxSize = fileIsVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(
+          `File size must be less than ${fileIsVideo ? "50MB" : "10MB"}`,
+        );
         return;
       }
       setMediaFile(file);
+      setIsVideo(fileIsVideo);
       const reader = new FileReader();
       reader.onload = () => setMediaPreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -36,7 +42,7 @@ export default function CreateStoryForm() {
 
   const handleSubmit = async () => {
     if (!mediaFile) {
-      toast.error("Please select a photo for your story");
+      toast.error("Please select a photo or video for your story");
       return;
     }
 
@@ -55,6 +61,7 @@ export default function CreateStoryForm() {
           setMediaFile(null);
           setMediaPreview(null);
           setUploadProgress(0);
+          setIsVideo(false);
           setOpen(false);
           toast.success("Story created successfully!");
         },
@@ -79,11 +86,24 @@ export default function CreateStoryForm() {
         <div className="space-y-4">
           {mediaPreview ? (
             <div className="relative rounded-lg overflow-hidden bg-muted">
-              <img
-                src={mediaPreview}
-                alt="Preview"
-                className="w-full h-auto max-h-96 object-cover"
-              />
+              {isVideo ? (
+                <video
+                  src={mediaPreview}
+                  className="w-full h-auto max-h-96 object-cover"
+                  controls
+                  muted
+                />
+              ) : (
+                <img
+                  src={mediaPreview}
+                  alt="Preview"
+                  className="w-full h-auto max-h-96 object-cover"
+                />
+              )}
+              {/* File type badge */}
+              <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full">
+                {isVideo ? "🎬 Video" : "📷 Photo"}
+              </div>
               <Button
                 type="button"
                 variant="destructive"
@@ -92,6 +112,7 @@ export default function CreateStoryForm() {
                 onClick={() => {
                   setMediaFile(null);
                   setMediaPreview(null);
+                  setIsVideo(false);
                 }}
                 disabled={isPending}
               >
@@ -108,14 +129,17 @@ export default function CreateStoryForm() {
             >
               <Plus className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Click to select a photo
+                Click to select a photo or video
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                📷 Images up to 10MB · 🎬 Videos up to 50MB
               </p>
             </button>
           )}
           <input
             id="story-media-input"
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleFileChange}
             className="hidden"
           />

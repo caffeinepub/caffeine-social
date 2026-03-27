@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -90,31 +90,44 @@ export default function Home() {
 
         {/* Active stories */}
         {stories.length > 0
-          ? stories.slice(0, 8).map((story, idx) => (
-              <button
-                key={story.id.toString()}
-                type="button"
-                onClick={() => openStory(idx)}
-                className="flex flex-col items-center gap-1 flex-shrink-0"
-                data-ocid={`stories.item.${idx + 1}`}
-              >
-                <div className="story-ring w-16 h-16">
-                  <div className="story-ring-inner w-full h-full">
-                    <Avatar className="w-full h-full">
-                      <AvatarFallback className="gradient-bg text-white text-sm font-bold">
-                        {
-                          DEMO_STORY_USERS[idx % DEMO_STORY_USERS.length]
-                            .initial
-                        }
-                      </AvatarFallback>
-                    </Avatar>
+          ? stories.slice(0, 8).map((story, idx) => {
+              const thumbUrl = story.media?.getDirectURL();
+              const authorLabel = `user_${story.author?.toString().slice(0, 4)}`;
+              return (
+                <button
+                  key={story.id.toString()}
+                  type="button"
+                  onClick={() => openStory(idx)}
+                  className="flex flex-col items-center gap-1 flex-shrink-0"
+                  data-ocid={`stories.item.${idx + 1}`}
+                >
+                  <div className="story-ring w-16 h-16">
+                    <div className="story-ring-inner w-full h-full">
+                      <Avatar className="w-full h-full">
+                        {thumbUrl && (
+                          <AvatarImage
+                            src={thumbUrl}
+                            alt={authorLabel}
+                            className="object-cover"
+                          />
+                        )}
+                        <AvatarFallback
+                          className="text-white text-sm font-bold"
+                          style={{
+                            background: `hsl(${(idx * 47 + 200) % 360}, 60%, 45%)`,
+                          }}
+                        >
+                          {authorLabel.slice(5, 7).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
                   </div>
-                </div>
-                <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
-                  {DEMO_STORY_USERS[idx % DEMO_STORY_USERS.length].name}
-                </span>
-              </button>
-            ))
+                  <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
+                    {authorLabel}
+                  </span>
+                </button>
+              );
+            })
           : DEMO_STORY_USERS.map((user, idx) => (
               <button
                 key={user.name}

@@ -1,8 +1,9 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { StoryView } from "../backend";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useViewStory } from "../hooks/useViewStory";
 
 interface StoryViewerProps {
@@ -19,9 +20,17 @@ export default function StoryViewer({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
   const { mutate: viewStory } = useViewStory();
+  const { identity } = useInternetIdentity();
 
   const currentStory = stories[currentIndex];
   const STORY_DURATION = 5000;
+
+  const myPrincipal = identity?.getPrincipal().toString();
+  const authorStr = currentStory?.author?.toString() ?? "";
+  const isMyStory = myPrincipal && authorStr === myPrincipal;
+  const authorLabel = isMyStory
+    ? "Your Story"
+    : `user_${authorStr.slice(0, 6)}`;
 
   useEffect(() => {
     if (currentStory) viewStory(currentStory.id);
@@ -93,13 +102,19 @@ export default function StoryViewer({
               <div className="story-ring-inner w-full h-full">
                 <Avatar className="w-full h-full">
                   <AvatarFallback className="gradient-bg text-white text-xs">
-                    S
+                    {authorLabel.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div>
             </div>
             <div>
-              <p className="text-white text-sm font-semibold">User</p>
+              <p className="text-white text-sm font-semibold">
+                {isMyStory ? (
+                  <span className="flex items-center gap-1">✨ Your Story</span>
+                ) : (
+                  authorLabel
+                )}
+              </p>
               <p className="text-white/60 text-xs">
                 {formatDistanceToNow(
                   Number(currentStory?.expiresAt ?? BigInt(0)) / 1_000_000 -
@@ -140,6 +155,19 @@ export default function StoryViewer({
             </div>
           )}
         </button>
+
+        {/* Footer: viewer count + swipe hint */}
+        <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-1 z-10 pointer-events-none">
+          <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">
+            <Eye className="w-3.5 h-3.5 text-white/80" />
+            <span className="text-white/80 text-xs">
+              {currentStory?.views?.length ?? 0} views
+            </span>
+          </div>
+          <p className="text-white/50 text-[10px] tracking-wide">
+            Tap left ← or right → to navigate
+          </p>
+        </div>
       </div>
     </div>
   );
