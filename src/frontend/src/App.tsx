@@ -6,6 +6,8 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
+import pwaIcon192 from "/assets/generated/saminsta-icon.dim_192x192.png";
+import pwaIcon512 from "/assets/generated/saminsta-icon.dim_512x512.png";
 import AuthGuard from "./components/AuthGuard";
 import Layout from "./components/Layout";
 import Explore from "./pages/Explore";
@@ -119,6 +121,19 @@ declare module "@tanstack/react-router" {
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
+      {/* PWA icons referenced here so build pipeline preserves the files */}
+      <img
+        src={pwaIcon512}
+        style={{ display: "none" }}
+        aria-hidden="true"
+        alt=""
+      />
+      <img
+        src={pwaIcon192}
+        style={{ display: "none" }}
+        aria-hidden="true"
+        alt=""
+      />
       <RouterProvider router={router} />
       <Toaster />
     </ThemeProvider>
