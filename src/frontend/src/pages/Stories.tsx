@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Plus } from "lucide-react";
+import { motion } from "motion/react";
 import { useState } from "react";
 import InstagramUploadModal from "../components/InstagramUploadModal";
 import StoryViewer from "../components/StoryViewer";
@@ -41,19 +42,85 @@ export default function Stories() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Stories</h1>
+      </div>
+
+      {/* Story circles row */}
+      <div className="flex gap-4 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+        {/* Add Story circle */}
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 gradient-bg text-white px-4 py-2 rounded-full text-sm font-semibold hover:opacity-90"
+          className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
           data-ocid="stories.open_modal_button"
         >
-          <Plus className="w-4 h-4" />
-          Add Story
+          <div
+            className="w-16 h-16 rounded-full p-0.5"
+            style={{
+              background: "linear-gradient(135deg, #f9a8d4, #c084fc, #818cf8)",
+            }}
+          >
+            <div className="w-full h-full rounded-full bg-zinc-900 p-0.5">
+              <div className="w-full h-full rounded-full gradient-bg flex items-center justify-center group-hover:opacity-90 transition-opacity">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+          <span className="text-xs text-white/60 font-medium whitespace-nowrap">
+            Your Story
+          </span>
         </button>
+
+        {/* Existing story circles */}
+        {stories.map((story, index) => (
+          <button
+            key={story.id.toString()}
+            type="button"
+            onClick={() => handleStoryClick(index)}
+            className="flex flex-col items-center gap-1.5 flex-shrink-0 group"
+            data-ocid={`stories.item.${index + 1}`}
+          >
+            <div
+              className="w-16 h-16 rounded-full p-0.5"
+              style={{
+                background:
+                  "linear-gradient(135deg, #f9a8d4, #c084fc, #818cf8)",
+              }}
+            >
+              <div className="w-full h-full rounded-full bg-zinc-900 p-0.5">
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  {story.media ? (
+                    <img
+                      src={story.media.getDirectURL()}
+                      alt="Story"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full bg-gradient-to-br ${
+                        STORY_COLORS[index % STORY_COLORS.length]
+                      } flex items-center justify-center`}
+                    >
+                      <Avatar className="w-full h-full">
+                        <AvatarFallback className="gradient-bg text-white text-sm font-bold">
+                          {String(story.author).slice(0, 1).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs text-white/60 font-medium whitespace-nowrap">
+              {String(story.author).slice(0, 6)}...
+            </span>
+          </button>
+        ))}
       </div>
 
+      {/* Story grid */}
       {stories.length === 0 ? (
         <div className="text-center py-20" data-ocid="stories.empty_state">
           <div className="w-20 h-20 gradient-bg rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -78,18 +145,21 @@ export default function Stories() {
           data-ocid="stories.list"
         >
           {stories.map((story, index) => (
-            <button
+            <motion.button
               key={story.id.toString()}
               type="button"
               onClick={() => handleStoryClick(index)}
-              className="relative aspect-[9/16] rounded-2xl overflow-hidden group"
+              className="relative rounded-2xl overflow-hidden group"
+              style={{ aspectRatio: "9/16" }}
               data-ocid={`stories.item.${index + 1}`}
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               {story.media ? (
                 <img
                   src={story.media.getDirectURL()}
                   alt="Story"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <div
@@ -97,27 +167,44 @@ export default function Stories() {
                     STORY_COLORS[index % STORY_COLORS.length]
                   } flex items-center justify-center`}
                 >
-                  <span className="text-white font-bold text-2xl">S</span>
+                  <span className="text-white font-bold text-4xl">
+                    {String(story.author).slice(0, 1).toUpperCase()}
+                  </span>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+              {/* Story ring avatar at top */}
               <div className="absolute top-3 left-3">
-                <div className="story-ring w-10 h-10">
-                  <div className="story-ring-inner w-full h-full">
+                <div
+                  className="w-9 h-9 rounded-full p-0.5"
+                  style={{
+                    background: "linear-gradient(135deg, #f9a8d4, #c084fc)",
+                  }}
+                >
+                  <div className="w-full h-full rounded-full bg-black/50 overflow-hidden">
                     <Avatar className="w-full h-full">
                       <AvatarFallback className="gradient-bg text-white text-xs font-bold">
-                        U
+                        {String(story.author).slice(0, 1).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                 </div>
               </div>
-              <p className="absolute bottom-3 left-3 text-white text-xs font-medium">
-                {new Date(
-                  Number(story.expiresAt) / 1_000_000 - 24 * 3600 * 1000,
-                ).toLocaleDateString()}
-              </p>
-            </button>
+
+              {/* Username at bottom */}
+              <div className="absolute bottom-3 left-3 right-3">
+                <p className="text-white text-xs font-semibold truncate">
+                  {String(story.author).slice(0, 6)}...
+                </p>
+                <p className="text-white/50 text-[10px]">
+                  {new Date(
+                    Number(story.expiresAt) / 1_000_000 - 24 * 3600 * 1000,
+                  ).toLocaleDateString()}
+                </p>
+              </div>
+            </motion.button>
           ))}
         </div>
       )}

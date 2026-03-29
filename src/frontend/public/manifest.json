@@ -7,12 +7,28 @@
   "background_color": "#000000",
   "theme_color": "#c026d3",
   "orientation": "portrait",
+  "id": "/",
   "icons": [
     {
-      "src": "/assets/generated/saminsta-icon.dim_512x512.png",
+      "src": "./assets/generated/saminsta-icon.dim_512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/generated/saminsta-icon.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./assets/generated/saminsta-icon.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Saminsta Home"
     }
   ]
 }
