@@ -3,23 +3,80 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { PostView, StoryView } from "../backend";
 import InstagramUploadModal from "../components/InstagramUploadModal";
 import PostCard from "../components/PostCard";
 import StoryViewer from "../components/StoryViewer";
 import { useGetActiveStories } from "../hooks/useGetActiveStories";
 import { useGetCallerUserProfile } from "../hooks/useGetCallerUserProfile";
 import { useGetFeed } from "../hooks/useGetFeed";
+import { useGetUserProfile } from "../hooks/useGetUserProfile";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
-const DEMO_NAMES: Record<string, string> = {};
 const DEMO_STORY_USERS = [
-  { name: "Sarah K.", initial: "SK" },
-  { name: "Ali Hassan", initial: "AH" },
-  { name: "Priya M.", initial: "PM" },
-  { name: "Jake T.", initial: "JT" },
-  { name: "Luna B.", initial: "LB" },
-  { name: "Omar F.", initial: "OF" },
+  { name: "sarah_k", initial: "SK" },
+  { name: "ali_hassan", initial: "AH" },
+  { name: "priya_m", initial: "PM" },
+  { name: "jake_t", initial: "JT" },
+  { name: "luna_b", initial: "LB" },
+  { name: "omar_f", initial: "OF" },
 ];
+
+function PostCardWithProfile({ post }: { post: PostView }) {
+  const { data: profile } = useGetUserProfile(post.author);
+  return (
+    <PostCard
+      post={post}
+      authorUsername={
+        profile?.username ?? `user_${post.author.toString().slice(0, 6)}`
+      }
+      authorPhoto={profile?.profilePhoto ?? undefined}
+    />
+  );
+}
+
+function StoryCircle({
+  story,
+  idx,
+  onClick,
+}: { story: StoryView; idx: number; onClick: () => void }) {
+  const { data: profile } = useGetUserProfile(story.author);
+  const thumbUrl = story.media?.getDirectURL();
+  const authorLabel =
+    profile?.username ?? `user_${story.author?.toString().slice(0, 4)}`;
+  return (
+    <button
+      key={story.id.toString()}
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1 flex-shrink-0"
+      data-ocid={`stories.item.${idx + 1}`}
+    >
+      <div className="story-ring w-16 h-16">
+        <div className="story-ring-inner w-full h-full">
+          <Avatar className="w-full h-full">
+            {thumbUrl && (
+              <AvatarImage
+                src={thumbUrl}
+                alt={authorLabel}
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback
+              className="text-white text-sm font-bold"
+              style={{ background: `hsl(${(idx * 47 + 200) % 360}, 60%, 45%)` }}
+            >
+              {authorLabel.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+      <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
+        @{authorLabel}
+      </span>
+    </button>
+  );
+}
 
 export default function Home() {
   const navigate = useNavigate();
@@ -36,6 +93,9 @@ export default function Home() {
 
   const isAuthenticated = !!identity;
   const myInitial = userProfile?.username?.slice(0, 2).toUpperCase() ?? "?";
+  const myUsername = userProfile?.username
+    ? `@${userProfile.username}`
+    : "Your story";
 
   const openStory = (idx: number) => {
     if (stories.length === 0) return;
@@ -84,50 +144,22 @@ export default function Home() {
             </div>
           </div>
           <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
-            {userProfile?.username ?? "Your story"}
+            {myUsername}
           </span>
         </button>
 
         {/* Active stories */}
         {stories.length > 0
-          ? stories.slice(0, 8).map((story, idx) => {
-              const thumbUrl = story.media?.getDirectURL();
-              const authorLabel = `user_${story.author?.toString().slice(0, 4)}`;
-              return (
-                <button
+          ? stories
+              .slice(0, 8)
+              .map((story, idx) => (
+                <StoryCircle
                   key={story.id.toString()}
-                  type="button"
+                  story={story}
+                  idx={idx}
                   onClick={() => openStory(idx)}
-                  className="flex flex-col items-center gap-1 flex-shrink-0"
-                  data-ocid={`stories.item.${idx + 1}`}
-                >
-                  <div className="story-ring w-16 h-16">
-                    <div className="story-ring-inner w-full h-full">
-                      <Avatar className="w-full h-full">
-                        {thumbUrl && (
-                          <AvatarImage
-                            src={thumbUrl}
-                            alt={authorLabel}
-                            className="object-cover"
-                          />
-                        )}
-                        <AvatarFallback
-                          className="text-white text-sm font-bold"
-                          style={{
-                            background: `hsl(${(idx * 47 + 200) % 360}, 60%, 45%)`,
-                          }}
-                        >
-                          {authorLabel.slice(5, 7).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
-                    {authorLabel}
-                  </span>
-                </button>
-              );
-            })
+                />
+              ))
           : DEMO_STORY_USERS.map((user, idx) => (
               <button
                 key={user.name}
@@ -151,7 +183,7 @@ export default function Home() {
                   </div>
                 </div>
                 <span className="text-[10px] text-muted-foreground w-16 text-center truncate">
-                  {user.name}
+                  @{user.name}
                 </span>
               </button>
             ))}
@@ -197,14 +229,7 @@ export default function Home() {
       ) : (
         <div data-ocid="feed.list">
           {posts.slice(0, visibleCount).map((post) => (
-            <PostCard
-              key={post.id.toString()}
-              post={post}
-              authorUsername={
-                DEMO_NAMES[post.author.toString()] ??
-                `user_${post.author.toString().slice(0, 6)}`
-              }
-            />
+            <PostCardWithProfile key={post.id.toString()} post={post} />
           ))}
           {/* Sentinel for infinite scroll */}
           <div ref={sentinelRef} className="py-2">

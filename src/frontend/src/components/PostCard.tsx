@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Principal } from "@dfinity/principal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
@@ -16,6 +17,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { PostView } from "../backend";
 import { useActor } from "../hooks/useActor";
+import { useGetUserProfile } from "../hooks/useGetUserProfile";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useLikePost } from "../hooks/useLikePost";
 import CommentSection from "./CommentSection";
@@ -45,6 +47,15 @@ function isVideoUrl(url: string) {
     /\.(mp4|webm|mov|ogg)$/i.test(url) ||
     url.includes("video") ||
     url.includes("/reel")
+  );
+}
+
+function CommentAuthor({ author }: { author: Principal }) {
+  const { data: profile } = useGetUserProfile(author);
+  return (
+    <span className="font-semibold mr-2">
+      @{profile?.username ?? `${author.toString().slice(0, 6)}...`}
+    </span>
   );
 }
 
@@ -340,7 +351,7 @@ export default function PostCard({
           onClick={handleAuthorClick}
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
           data-ocid={`feed.link.${Number(post.id)}`}
-          aria-label={`View ${displayName}'s profile`}
+          aria-label={`View @${displayName}'s profile`}
         >
           <div className="story-ring w-9 h-9 flex-shrink-0">
             <div className="story-ring-inner w-full h-full">
@@ -356,7 +367,7 @@ export default function PostCard({
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground leading-none">
-              {displayName}
+              @{displayName}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {timeAgo(post.createdAt)}
@@ -504,7 +515,7 @@ export default function PostCard({
         {/* Caption */}
         {post.media && post.content && (
           <p className="text-sm mb-1">
-            <span className="font-semibold mr-2">{displayName}</span>
+            <span className="font-semibold mr-2">@{displayName}</span>
             {post.content}
           </p>
         )}
@@ -514,9 +525,7 @@ export default function PostCard({
           <div className="mb-1">
             {post.comments.slice(0, 2).map((c) => (
               <p key={c.id.toString()} className="text-sm">
-                <span className="font-semibold mr-2">
-                  {c.author.toString().slice(0, 6)}...
-                </span>
+                <CommentAuthor author={c.author} />
                 {c.content}
               </p>
             ))}

@@ -45,21 +45,36 @@ export default function ProfileSetupModal() {
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="text-2xl">Welcome! 🎉</DialogTitle>
+          <DialogTitle className="text-2xl">
+            Welcome to Saminsta! 🎉
+          </DialogTitle>
           <DialogDescription>
-            Let&apos;s set up your profile to get started on Saminsta.
+            Choose your @username to get started. This is how people will find
+            you.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={isPending}
-            />
+            <div className="flex items-center border border-input rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden">
+              <span className="px-3 py-2 bg-muted text-muted-foreground text-sm font-semibold border-r border-input select-none">
+                @
+              </span>
+              <Input
+                id="username"
+                placeholder="yourname"
+                value={username}
+                onChange={(e) =>
+                  setUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""))
+                }
+                disabled={isPending}
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none"
+                data-ocid="profile_setup.input"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Only letters, numbers, underscores and dots allowed.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -70,9 +85,15 @@ export default function ProfileSetupModal() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isPending}
+              data-ocid="profile_setup.input"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isPending}>
+          <Button
+            type="submit"
+            className="w-full gradient-bg text-white border-0 hover:opacity-90"
+            disabled={isPending}
+            data-ocid="profile_setup.submit_button"
+          >
             {isPending ? "Creating Profile..." : "Create Profile"}
           </Button>
         </form>

@@ -1,11 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import type { PostView } from "../backend";
 import { useGetFeed } from "../hooks/useGetFeed";
+import { useGetUserProfile } from "../hooks/useGetUserProfile";
 
 const FILTER_TABS = ["All", "Photos", "Videos", "People"] as const;
 type FilterTab = (typeof FILTER_TABS)[number];
@@ -39,6 +40,48 @@ const GRADIENT_PLACEHOLDERS = [
   "from-teal-900 to-green-600",
   "from-orange-900 to-amber-600",
 ];
+
+function PersonRow({ principal, idx }: { principal: string; idx: number }) {
+  const { data: profile } = useGetUserProfile(principal);
+  const navigate = useNavigate();
+  const username = profile?.username ?? `${principal.slice(0, 8)}...`;
+  const initials = username.slice(0, 2).toUpperCase();
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        navigate({
+          to: "/user/$userId",
+          params: { userId: principal },
+        })
+      }
+      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+      data-ocid={`explore.item.${idx + 1}`}
+    >
+      <Avatar className="w-12 h-12 flex-shrink-0">
+        {profile?.profilePhoto && (
+          <AvatarImage src={profile.profilePhoto} alt={username} />
+        )}
+        <AvatarFallback className="gradient-bg text-white font-bold">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate">@{username}</p>
+        <p className="text-xs text-muted-foreground truncate">Saminsta</p>
+      </div>
+      <Button
+        size="sm"
+        className="gradient-bg text-white border-0 hover:opacity-90 flex-shrink-0 pointer-events-none"
+        data-ocid="explore.primary_button"
+        asChild={false}
+      >
+        View Profile
+      </Button>
+    </button>
+  );
+}
 
 export default function Explore() {
   const [query, setQuery] = useState("");
@@ -173,40 +216,11 @@ export default function Explore() {
         ) : (
           <div className="space-y-1" data-ocid="explore.list">
             {authors.map((author, idx) => (
-              <button
+              <PersonRow
                 key={author.principal}
-                type="button"
-                onClick={() =>
-                  navigate({
-                    to: "/user/$userId",
-                    params: { userId: author.principal },
-                  })
-                }
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
-                data-ocid={`explore.item.${idx + 1}`}
-              >
-                <Avatar className="w-12 h-12 flex-shrink-0">
-                  <AvatarFallback className="gradient-bg text-white font-bold">
-                    {author.principal.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">
-                    {author.principal.slice(0, 12)}...
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono truncate">
-                    {author.principal}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  className="gradient-bg text-white border-0 hover:opacity-90 flex-shrink-0 pointer-events-none"
-                  data-ocid="explore.primary_button"
-                  asChild={false}
-                >
-                  View Profile
-                </Button>
-              </button>
+                principal={author.principal}
+                idx={idx}
+              />
             ))}
           </div>
         )
